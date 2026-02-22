@@ -9,13 +9,33 @@ import { useAnalyticsStore } from "@/stores/analyticsStore";
 import { useAchievementStore } from "@/stores/achievementStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { useNotificationStore } from "@/stores/notificationStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useColors } from "@/hooks/useColors";
 import BadgeUnlockModal from "@/components/BadgeUnlockModal";
 import { StatusBar } from "expo-status-bar";
+import { useRouter, useSegments } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+function OnboardingRedirect() {
+  const { hasSeenOnboarding } = useSettingsStore();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Wait for navigation to be ready
+    const timer = setTimeout(() => {
+      if (!hasSeenOnboarding && segments[0] !== 'onboarding') {
+        router.replace('/onboarding');
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [hasSeenOnboarding, segments]);
+
+  return null;
+}
 
 function PremiumDailyReset() {
   useEffect(() => {
@@ -60,6 +80,7 @@ function RootLayoutNav() {
       contentStyle: { backgroundColor: colors.background }
     }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="quiz" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="exam" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="exam-result" options={{ headerShown: false }} />
@@ -80,7 +101,10 @@ export default function RootLayout() {
   const colors = useColors();
 
   useEffect(() => {
-    SplashScreen.hideAsync();
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync();
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -90,6 +114,7 @@ export default function RootLayout() {
           <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
           <PremiumDailyReset />
           <AnalyticsSessionTracker />
+          <OnboardingRedirect />
           <RootLayoutNav />
           <BadgeToast />
         </StudyProvider>
