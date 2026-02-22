@@ -8,6 +8,8 @@ import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
 import { useStudy } from '@/providers/StudyProvider';
 import { studyCategories } from '@/mocks/questions';
+import { useAchievementStore } from '@/stores/achievementStore';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { useSpacedRepetitionStore } from '@/stores/spacedRepetitionStore';
 import { useStudyPlanStore } from '@/stores/studyPlanStore';
 import { formatDuration } from '@/utils/examUtils';
@@ -20,6 +22,7 @@ export default function HomeScreen() {
   const { mode, toggleTheme } = useThemeStore();
   const { stats } = useStudy();
   const dueCount = useSpacedRepetitionStore((s) => s.getDueCount());
+  const unlockedBadgesCount = useAchievementStore((s) => s.unlockedBadges.length);
   const { activePlan, getTodaysTasks, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
   const todaysTasks = getTodaysTasks();
   const planProgress = getPlanProgress();
@@ -29,7 +32,7 @@ export default function HomeScreen() {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const dailyPercent = Math.min(stats.dailyProgress / stats.dailyGoal, 1);
+  const dailyPercent = Math.min(stats.dailyProgress / (stats.dailyGoal || 1), 1);
   const accuracy = stats.totalAnswered > 0 ? Math.round((stats.correctAnswers / stats.totalAnswered) * 100) : 0;
 
   useEffect(() => {
@@ -81,15 +84,17 @@ export default function HomeScreen() {
               <Target color={colors.accent} size={20} />
               <Text style={styles.dailyTitle}>Günlük Hedef</Text>
             </View>
-            <Text style={styles.dailyCount}>
-              {stats.dailyProgress}/{stats.dailyGoal}
-            </Text>
+            <View style={styles.dailyBadge}>
+              <Text style={styles.dailyCount}>
+                {stats.dailyProgress}/{stats.dailyGoal}
+              </Text>
+            </View>
           </View>
           <View style={styles.progressBar}>
             <Animated.View style={[styles.progressFill, { width: progressWidth, backgroundColor: colors.accent }]} />
           </View>
           <Text style={styles.dailyHint}>
-            {dailyPercent >= 1 ? 'Harika! Günlük hedefini tamamladın! 🎉' : `${stats.dailyGoal - stats.dailyProgress} soru daha çöz`}
+            {dailyPercent >= 1 ? 'Harika! Günlük hedefini tamamladın! 🎉' : `${(stats.dailyGoal || 20) - stats.dailyProgress} soru daha çöz`}
           </Text>
         </View>
       </LinearGradient>
@@ -106,10 +111,10 @@ export default function HomeScreen() {
             <Text style={styles.statValue}>%{accuracy}</Text>
             <Text style={styles.statLabel}>Başarı</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: mode === 'dark' ? '#102040' : '#EFF6FF' }]}>
-            <BookOpen color="#3B82F6" size={22} />
-            <Text style={stats.totalAnswered > 0 ? styles.statValue : styles.statLabel}>{stats.totalAnswered}</Text>
-            <Text style={styles.statLabel}>Toplam</Text>
+          <View style={[styles.statCard, { backgroundColor: mode === 'dark' ? '#31104D' : '#F5F3FF' }]}>
+            <Trophy color="#8B5CF6" size={22} />
+            <Text style={styles.statValue}>{unlockedBadgesCount}</Text>
+            <Text style={styles.statLabel}>Rozetler</Text>
           </View>
         </View>
 
@@ -316,8 +321,14 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   dailyCount: {
     color: colors.accent,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700' as const,
+  },
+  dailyBadge: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   progressBar: {
     height: 8,
