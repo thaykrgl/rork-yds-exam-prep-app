@@ -256,7 +256,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.accentSoft,
+    color: colors.headerSubtitle,
   },
   content: {
     flex: 1,

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, TrendingUp, BarChart3, Target, Clock, AlertTriangle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { useStudy } from '@/providers/StudyProvider';
 import { useAnalyticsStore } from '@/stores/analyticsStore';
 import { useSpacedRepetitionStore } from '@/stores/spacedRepetitionStore';
@@ -26,9 +26,12 @@ const categoryLabels: Record<QuestionCategory, string> = {
 export default function AnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
   const { stats } = useStudy();
   const { getWeeklyTrend, getMonthlyTrend } = useAnalyticsStore();
   const { reviewData } = useSpacedRepetitionStore();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const weeklyData = useMemo(() => getWeeklyTrend(), []);
   const monthlyData = useMemo(() => getMonthlyTrend(), []);
@@ -120,7 +123,7 @@ export default function AnalyticsScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={22} color={Colors.text} />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detaylı Analiz</Text>
         <View style={{ width: 36 }} />
@@ -129,18 +132,18 @@ export default function AnalyticsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Summary Cards */}
         <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { backgroundColor: '#F0FDF4' }]}>
-            <TrendingUp size={20} color="#22C55E" />
+          <View style={[styles.summaryCard, { backgroundColor: colors.success + '15' }]}>
+            <TrendingUp size={20} color={colors.success} />
             <Text style={styles.summaryValue}>%{accuracy}</Text>
             <Text style={styles.summaryLabel}>Genel Başarı</Text>
           </View>
-          <View style={[styles.summaryCard, { backgroundColor: '#EFF6FF' }]}>
-            <BarChart3 size={20} color="#3B82F6" />
+          <View style={[styles.summaryCard, { backgroundColor: colors.primary + '15' }]}>
+            <BarChart3 size={20} color={colors.primary} />
             <Text style={styles.summaryValue}>{stats.totalAnswered}</Text>
             <Text style={styles.summaryLabel}>Toplam Soru</Text>
           </View>
-          <View style={[styles.summaryCard, { backgroundColor: '#FFF7ED' }]}>
-            <Clock size={20} color="#F97316" />
+          <View style={[styles.summaryCard, { backgroundColor: colors.warning + '15' }]}>
+            <Clock size={20} color={colors.warning} />
             <Text style={styles.summaryValue}>{totalStudyMinutes}dk</Text>
             <Text style={styles.summaryLabel}>Çalışma Süresi</Text>
           </View>
@@ -151,7 +154,7 @@ export default function AnalyticsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Sınav Puan Trendi</Text>
             <View style={styles.chartCard}>
-              <SimpleLineChart data={examTrend} height={130} color="#6366F1" />
+              <SimpleLineChart data={examTrend} height={130} color={colors.accent} />
             </View>
           </View>
         )}
@@ -198,13 +201,13 @@ export default function AnalyticsScreen() {
             <Text style={styles.sectionTitle}>Zayıf Alanlar</Text>
             {weakAreas.map(area => (
               <View key={area.id} style={styles.weakCard}>
-                <AlertTriangle size={18} color={Colors.warning} />
+                <AlertTriangle size={18} color={colors.warning} />
                 <View style={styles.weakInfo}>
                   <Text style={styles.weakTitle}>{area.titleTr}</Text>
                   <Text style={styles.weakSub}>{area.answered} soru · %{area.accuracy} doğruluk</Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.weakButton}
+                  style={[styles.weakButton, { backgroundColor: colors.warning }]}
                   onPress={() => router.push({ pathname: '/quiz' as any, params: { category: area.id } })}
                 >
                   <Text style={styles.weakButtonText}>Çalış</Text>
@@ -225,7 +228,7 @@ export default function AnalyticsScreen() {
               </View>
               <View style={styles.examSummaryRow}>
                 <Text style={styles.examSummaryLabel}>En Yüksek Puan</Text>
-                <Text style={[styles.examSummaryValue, { color: Colors.success }]}>
+                <Text style={[styles.examSummaryValue, { color: colors.success }]}>
                   %{Math.max(...stats.examHistory.map(e => Math.round((e.score / e.totalQuestions) * 100)))}
                 </Text>
               </View>
@@ -237,7 +240,7 @@ export default function AnalyticsScreen() {
               </View>
               <View style={styles.examSummaryRow}>
                 <Text style={styles.examSummaryLabel}>Tahmini YDS Puanı</Text>
-                <Text style={[styles.examSummaryValue, { color: Colors.examAccent }]}>
+                <Text style={[styles.examSummaryValue, { color: colors.examAccent }]}>
                   {Math.round(stats.examHistory.reduce((sum, e) => sum + e.estimatedYDSScore, 0) / stats.examHistory.length)}
                 </Text>
               </View>
@@ -251,8 +254,8 @@ export default function AnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -262,41 +265,41 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: Colors.text },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
   content: { paddingHorizontal: 20, paddingTop: 8 },
   summaryRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
   summaryCard: {
     flex: 1, borderRadius: 14, padding: 14,
     alignItems: 'center', gap: 6,
   },
-  summaryValue: { fontSize: 18, fontWeight: '700', color: Colors.text },
-  summaryLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '500', textAlign: 'center' },
+  summaryValue: { fontSize: 18, fontWeight: '700', color: colors.text },
+  summaryLabel: { fontSize: 10, color: colors.textSecondary, fontWeight: '500', textAlign: 'center' },
   section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.text, marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
   chartCard: {
-    backgroundColor: Colors.surface, borderRadius: 14, padding: 16,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 16,
   },
   weakCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.warning + '10', borderRadius: 12,
+    backgroundColor: colors.warning + '10', borderRadius: 12,
     padding: 14, marginBottom: 8, gap: 12,
   },
   weakInfo: { flex: 1 },
-  weakTitle: { fontSize: 14, fontWeight: '600', color: Colors.text },
-  weakSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  weakTitle: { fontSize: 14, fontWeight: '600', color: colors.text },
+  weakSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   weakButton: {
-    backgroundColor: Colors.warning, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
   },
   weakButtonText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
   examSummaryCard: {
-    backgroundColor: Colors.surface, borderRadius: 14, padding: 16, gap: 12,
+    backgroundColor: colors.surface, borderRadius: 14, padding: 16, gap: 12,
   },
   examSummaryRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  examSummaryLabel: { fontSize: 14, color: Colors.textSecondary },
-  examSummaryValue: { fontSize: 16, fontWeight: '700', color: Colors.text },
+  examSummaryLabel: { fontSize: 14, color: colors.textSecondary },
+  examSummaryValue: { fontSize: 16, fontWeight: '700', color: colors.text },
 });

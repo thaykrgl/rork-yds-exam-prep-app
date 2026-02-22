@@ -13,6 +13,7 @@ import { useAchievementStore } from '@/stores/achievementStore';
 import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
 import { useGrammarStore } from '@/stores/grammarStore';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { requestNotificationPermissions } from '@/utils/notifications';
 import { allBadges } from '@/data/badges';
 import BadgeCard from '@/components/BadgeCard';
 import XPBar from '@/components/XPBar';
@@ -51,6 +52,56 @@ export default function ProfileScreen() {
     });
   }, [stats.categoryStats]);
 
+  const { preferences, updatePreferences } = useNotificationStore();
+
+  const handleToggleDaily = async () => {
+    const newState = !preferences.dailyReminder;
+    if (newState) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        Alert.alert(
+          'Bildirim İzni',
+          'Hatırlatıcıları etkinleştirmek için ayarlardan bildirim izni vermeniz gerekmektedir.',
+          [{ text: 'Tamam' }]
+        );
+        return;
+      }
+    }
+    await updatePreferences({ dailyReminder: newState });
+  };
+
+  const handleToggleStreak = async () => {
+    const newState = !preferences.streakReminder;
+    if (newState) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        Alert.alert(
+          'Bildirim İzni',
+          'Seri hatırlatıcılarını etkinleştirmek için ayarlardan bildirim izni vermeniz gerekmektedir.',
+          [{ text: 'Tamam' }]
+        );
+        return;
+      }
+    }
+    await updatePreferences({ streakReminder: newState });
+  };
+
+  const handleToggleMilestones = async () => {
+    const newState = !preferences.milestoneNotifications;
+    if (newState) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        Alert.alert(
+          'Bildirim İzni',
+          'Başarı bildirimlerini etkinleştirmek için ayarlardan bildirim izni vermeniz gerekmektedir.',
+          [{ text: 'Tamam' }]
+        );
+        return;
+      }
+    }
+    await updatePreferences({ milestoneNotifications: newState });
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
@@ -77,21 +128,21 @@ export default function ProfileScreen() {
         {/* Big stats row */}
         <View style={styles.bigStatsRow}>
           <View style={styles.bigStat}>
-            <View style={[styles.bigStatIcon, { backgroundColor: '#FFF7ED' }]}>
+            <View style={[styles.bigStatIcon, { backgroundColor: mode === 'dark' ? '#3D2010' : '#FFF7ED' }]}>
               <Flame color="#F97316" size={24} />
             </View>
             <Text style={styles.bigStatValue}>{stats.streak}</Text>
             <Text style={styles.bigStatLabel}>Günlük Seri</Text>
           </View>
           <View style={styles.bigStat}>
-            <View style={[styles.bigStatIcon, { backgroundColor: '#F0FDF4' }]}>
+            <View style={[styles.bigStatIcon, { backgroundColor: mode === 'dark' ? '#103020' : '#F0FDF4' }]}>
               <Target color="#22C55E" size={24} />
             </View>
             <Text style={styles.bigStatValue}>%{accuracy}</Text>
             <Text style={styles.bigStatLabel}>Doğruluk Oranı</Text>
           </View>
           <View style={styles.bigStat}>
-            <View style={[styles.bigStatIcon, { backgroundColor: '#EFF6FF' }]}>
+            <View style={[styles.bigStatIcon, { backgroundColor: mode === 'dark' ? '#102040' : '#EFF6FF' }]}>
               <Clock color="#3B82F6" size={24} />
             </View>
             <Text style={styles.bigStatValue}>{Math.round(stats.totalStudyTimeSeconds / 60)}</Text>
@@ -172,7 +223,7 @@ export default function ProfileScreen() {
             <BadgeCard 
               key={badge.id} 
               badge={badge} 
-              unlocked={useAchievementStore.getState().isUnlocked(badge.id)} 
+              unlocked={useAchievementStore(s => s.isUnlocked(badge.id))} 
             />
           ))}
         </View>
@@ -182,12 +233,9 @@ export default function ProfileScreen() {
         <View style={styles.notifCard}>
           <TouchableOpacity
             style={styles.notifRow}
-            onPress={() => {
-              const store = useNotificationStore.getState();
-              store.updatePreferences({ dailyReminder: !store.preferences.dailyReminder });
-            }}
+            onPress={handleToggleDaily}
           >
-            {useNotificationStore.getState().preferences.dailyReminder ? (
+            {preferences.dailyReminder ? (
               <Bell size={18} color={colors.accent} />
             ) : (
               <BellOff size={18} color={colors.textLight} />
@@ -196,42 +244,36 @@ export default function ProfileScreen() {
               <Text style={styles.notifTitle}>Günlük Hatırlatıcı</Text>
               <Text style={styles.notifSub}>Her gün çalışma hatırlatması al</Text>
             </View>
-            <View style={[styles.notifToggle, useNotificationStore.getState().preferences.dailyReminder && styles.notifToggleActive]}>
-              <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.dailyReminder && styles.notifToggleDotActive]} />
+            <View style={[styles.notifToggle, preferences.dailyReminder && styles.notifToggleActive]}>
+              <View style={[styles.notifToggleDot, preferences.dailyReminder && preferences.dailyReminder && styles.notifToggleDotActive]} />
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.notifRow}
-            onPress={() => {
-              const store = useNotificationStore.getState();
-              store.updatePreferences({ streakReminder: !store.preferences.streakReminder });
-            }}
+            onPress={handleToggleStreak}
           >
-            <Flame size={18} color={useNotificationStore.getState().preferences.streakReminder ? colors.error : colors.textLight} />
+            <Flame size={18} color={preferences.streakReminder ? colors.error : colors.textLight} />
             <View style={styles.notifInfo}>
               <Text style={styles.notifTitle}>Seri Hatırlatıcı</Text>
               <Text style={styles.notifSub}>Serin kırılmadan önce uyarıl</Text>
             </View>
-            <View style={[styles.notifToggle, useNotificationStore.getState().preferences.streakReminder && styles.notifToggleActive]}>
-              <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.streakReminder && styles.notifToggleDotActive]} />
+            <View style={[styles.notifToggle, preferences.streakReminder && styles.notifToggleActive]}>
+              <View style={[styles.notifToggleDot, preferences.streakReminder && styles.notifToggleDotActive]} />
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.notifRow}
-            onPress={() => {
-              const store = useNotificationStore.getState();
-              store.updatePreferences({ milestoneNotifications: !store.preferences.milestoneNotifications });
-            }}
+            onPress={handleToggleMilestones}
           >
-            <Trophy size={18} color={useNotificationStore.getState().preferences.milestoneNotifications ? colors.accent : colors.textLight} />
+            <Trophy size={18} color={preferences.milestoneNotifications ? colors.accent : colors.textLight} />
             <View style={styles.notifInfo}>
               <Text style={styles.notifTitle}>Başarı Bildirimleri</Text>
               <Text style={styles.notifSub}>Rozet ve rekor bildirimleri</Text>
             </View>
-            <View style={[styles.notifToggle, useNotificationStore.getState().preferences.milestoneNotifications && styles.notifToggleActive]}>
-              <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.milestoneNotifications && styles.notifToggleDotActive]} />
+            <View style={[styles.notifToggle, preferences.milestoneNotifications && styles.notifToggleActive]}>
+              <View style={[styles.notifToggleDot, preferences.milestoneNotifications && styles.notifToggleDotActive]} />
             </View>
           </TouchableOpacity>
         </View>
@@ -329,7 +371,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.accentSoft,
+    color: colors.headerSubtitle,
   },
   content: {
     flex: 1,

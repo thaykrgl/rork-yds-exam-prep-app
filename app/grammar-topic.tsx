@@ -11,7 +11,7 @@ import {
   GitBranch, Link, ArrowDownUp, MessageSquare, Clock, Users,
   FileText, Repeat, Volume2, ArrowRightLeft, Puzzle, PenTool, Star, Layers,
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { grammarTopics } from '@/data/grammarTopics';
 import { useGrammarStore } from '@/stores/grammarStore';
 import { GrammarTopicId } from '@/types';
@@ -27,17 +27,14 @@ const difficultyLabels: Record<string, string> = {
   advanced: 'İleri',
 };
 
-const difficultyColors: Record<string, string> = {
-  beginner: '#22C55E',
-  intermediate: '#F59E0B',
-  advanced: '#EF4444',
-};
-
 export default function GrammarTopicScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
   const { topicId } = useLocalSearchParams<{ topicId: string }>();
   const { markAsRead, isTopicRead, getTopicProgress } = useGrammarStore();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const topic = useMemo(
     () => grammarTopics.find(t => t.id === topicId),
@@ -125,7 +122,7 @@ export default function GrammarTopicScreen() {
         {/* Introduction */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <BookOpen color={Colors.examAccent} size={18} />
+            <BookOpen color={colors.examAccent} size={18} />
             <Text style={styles.sectionTitle}>Giriş</Text>
           </View>
           <Text style={styles.introText}>{topic.content.introduction}</Text>
@@ -134,7 +131,7 @@ export default function GrammarTopicScreen() {
         {/* Rules */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Target color={Colors.accent} size={18} />
+            <Target color={colors.accent} size={18} />
             <Text style={styles.sectionTitle}>Kurallar</Text>
           </View>
           {topic.content.rules.map((rule, i) => (
@@ -178,12 +175,12 @@ export default function GrammarTopicScreen() {
         {/* Common Mistakes */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <XCircle color={Colors.error} size={18} />
+            <XCircle color={colors.error} size={18} />
             <Text style={styles.sectionTitle}>Sık Yapılan Hatalar</Text>
           </View>
           {topic.content.commonMistakes.map((mistake, i) => (
             <View key={i} style={styles.mistakeItem}>
-              <XCircle color={Colors.error} size={14} />
+              <XCircle color={colors.error} size={14} />
               <Text style={styles.mistakeText}>{mistake}</Text>
             </View>
           ))}
@@ -192,10 +189,10 @@ export default function GrammarTopicScreen() {
         {/* Quick Tip */}
         <View style={styles.tipCard}>
           <LinearGradient
-            colors={[Colors.accent + '15', Colors.accentLight + '08']}
+            colors={[colors.accent + '15', colors.accentLight + '08']}
             style={styles.tipGradient}
           >
-            <Lightbulb color={Colors.accent} size={20} />
+            <Lightbulb color={colors.accent} size={20} />
             <View style={styles.tipContent}>
               <Text style={styles.tipLabel}>Hızlı İpucu</Text>
               <Text style={styles.tipText}>{topic.content.quickTip}</Text>
@@ -211,13 +208,13 @@ export default function GrammarTopicScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={read ? [Colors.success, '#34D399'] : [Colors.accent, Colors.accentLight]}
+              colors={read ? [colors.success, '#34D399'] : [colors.accent, colors.accentLight]}
               style={styles.actionGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
-              <CheckCircle color={read ? '#FFFFFF' : Colors.primary} size={20} />
-              <Text style={[styles.actionText, { color: read ? '#FFFFFF' : Colors.primary }]}>
+              <CheckCircle color={read ? '#FFFFFF' : colors.primary} size={20} />
+              <Text style={[styles.actionText, { color: read ? '#FFFFFF' : colors.primary }]}>
                 {read ? 'Tekrar Okundu ✓' : 'Okundu İşaretle'}
               </Text>
             </LinearGradient>
@@ -230,7 +227,7 @@ export default function GrammarTopicScreen() {
               activeOpacity={0.8}
             >
               <View style={styles.practiceBtnInner}>
-                <Play color={Colors.examAccent} size={20} />
+                <Play color={colors.examAccent} size={20} />
                 <Text style={styles.practiceText}>
                   Pratik Yap ({topic.relatedQuestionIds.length} soru)
                 </Text>
@@ -245,20 +242,20 @@ export default function GrammarTopicScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   errorText: {
     fontSize: 16,
-    color: Colors.text,
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 12,
   },
   errorLink: {
     fontSize: 15,
-    color: Colors.accent,
+    color: colors.accent,
     textAlign: 'center',
     fontWeight: '600' as const,
   },
@@ -354,26 +351,26 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   introText: {
     fontSize: 15,
     lineHeight: 24,
-    color: Colors.text,
-    backgroundColor: Colors.surface,
+    color: colors.text,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
   },
   ruleCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.accent,
+    borderLeftColor: colors.accent,
   },
   ruleFormulaWrap: {
-    backgroundColor: Colors.primaryDark + '08',
+    backgroundColor: colors.primaryDark + '08',
     borderRadius: 8,
     padding: 10,
     marginBottom: 8,
@@ -381,16 +378,16 @@ const styles = StyleSheet.create({
   ruleFormula: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: 'monospace',
   },
   ruleExplanation: {
     fontSize: 14,
     lineHeight: 22,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   exampleCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -399,12 +396,12 @@ const styles = StyleSheet.create({
   exEnglish: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 22,
   },
   exTurkish: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 20,
     fontStyle: 'italic',
   },
@@ -413,7 +410,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
     marginBottom: 8,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 10,
     padding: 12,
   },
@@ -421,21 +418,21 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
     marginTop: 7,
   },
   patternText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
-    color: Colors.text,
+    color: colors.text,
   },
   mistakeItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
     marginBottom: 8,
-    backgroundColor: Colors.error + '08',
+    backgroundColor: colors.error + '08',
     borderRadius: 10,
     padding: 12,
   },
@@ -443,7 +440,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
-    color: Colors.text,
+    color: colors.text,
   },
   tipCard: {
     borderRadius: 14,
@@ -457,7 +454,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: Colors.accent + '20',
+    borderColor: colors.accent + '20',
   },
   tipContent: {
     flex: 1,
@@ -465,13 +462,13 @@ const styles = StyleSheet.create({
   tipLabel: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.accent,
+    color: colors.accent,
     marginBottom: 4,
   },
   tipText: {
     fontSize: 14,
     lineHeight: 22,
-    color: Colors.text,
+    color: colors.text,
   },
   actions: {
     gap: 12,
@@ -500,13 +497,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     gap: 10,
     borderWidth: 1.5,
-    borderColor: Colors.examAccent + '30',
+    borderColor: colors.examAccent + '30',
     borderRadius: 14,
-    backgroundColor: Colors.examAccent + '08',
+    backgroundColor: colors.examAccent + '08',
   },
   practiceText: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.examAccent,
+    color: colors.examAccent,
   },
 });

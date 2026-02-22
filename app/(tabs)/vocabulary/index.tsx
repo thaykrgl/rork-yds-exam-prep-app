@@ -22,7 +22,7 @@ export default function VocabularyScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { vocabCards, toggleMastered } = useStudy();
-  const { isPremium } = usePremiumStore();
+  const isPremium = usePremiumStore(s => s.tier === 'premium');
   const [filter, setFilter] = useState<FilterType>('all');
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [showPaywall, setShowPaywall] = useState(false);
@@ -221,7 +221,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.accentSoft,
+    color: colors.headerSubtitle,
     marginBottom: 12,
   },
   progressBarContainer: {

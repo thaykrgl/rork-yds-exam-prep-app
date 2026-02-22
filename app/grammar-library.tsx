@@ -8,7 +8,8 @@ import {
   ArrowDownUp, MessageSquare, Clock, Users, FileText, Repeat,
   Volume2, ArrowRightLeft, Puzzle, PenTool, Star, Layers
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
+import { useThemeStore } from '@/stores/themeStore';
 import { grammarTopics } from '@/data/grammarTopics';
 import { useGrammarStore } from '@/stores/grammarStore';
 import { GrammarTheme, GrammarDifficulty, GrammarTopic } from '@/types';
@@ -23,13 +24,6 @@ const themeLabels: Record<GrammarTheme, string> = {
   verb_forms: 'Fiil Biçimleri',
   clauses: 'Yan Cümle',
   special_structures: 'Özel Yapılar',
-};
-
-const themeColors: Record<GrammarTheme, string> = {
-  sentence_structure: '#3B82F6',
-  verb_forms: '#F59E0B',
-  clauses: '#8B5CF6',
-  special_structures: '#EF4444',
 };
 
 const difficultyLabels: Record<GrammarDifficulty, string> = {
@@ -49,9 +43,20 @@ type FilterType = 'all' | GrammarTheme;
 export default function GrammarLibraryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
+  const { mode } = useThemeStore();
   const { isTopicRead, getReadCount, getTotalTopics } = useGrammarStore();
   const [filter, setFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const themeColors: Record<GrammarTheme, string> = useMemo(() => ({
+    sentence_structure: '#3B82F6',
+    verb_forms: '#F59E0B',
+    clauses: mode === 'dark' ? '#A78BFA' : '#8B5CF6',
+    special_structures: '#EF4444',
+  }), [mode]);
 
   const readCount = getReadCount();
   const totalTopics = getTotalTopics();
@@ -94,7 +99,7 @@ export default function GrammarLibraryScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.primaryLight]}
+        colors={[colors.primary, colors.primaryLight]}
         style={[styles.header, { paddingTop: insets.top + 12 }]}
       >
         <View style={styles.headerRow}>
@@ -119,7 +124,7 @@ export default function GrammarLibraryScreen() {
           </View>
           <View style={styles.progressBarBg}>
             <LinearGradient
-              colors={[Colors.accent, Colors.accentLight]}
+              colors={[colors.accent, colors.accentLight]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[styles.progressBarFill, { width: `${progressPct}%` as any }]}
@@ -130,11 +135,11 @@ export default function GrammarLibraryScreen() {
 
         {/* Search */}
         <View style={styles.searchContainer}>
-          <Search color={Colors.textLight} size={18} />
+          <Search color={colors.textLight} size={18} />
           <TextInput
             style={styles.searchInput}
             placeholder="Konu ara..."
-            placeholderTextColor={Colors.textLight}
+            placeholderTextColor={colors.textLight}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -193,7 +198,7 @@ export default function GrammarLibraryScreen() {
                   <Text style={styles.topicTitle} numberOfLines={1}>
                     {topic.titleTr}
                   </Text>
-                  {read && <CheckCircle color={Colors.success} size={16} />}
+                  {read && <CheckCircle color={colors.success} size={16} />}
                 </View>
                 <Text style={styles.topicDesc} numberOfLines={1}>
                   {topic.description}
@@ -231,14 +236,14 @@ export default function GrammarLibraryScreen() {
                   </View>
                 </View>
               </View>
-              <ChevronRight color={Colors.textLight} size={18} />
+              <ChevronRight color={colors.textLight} size={18} />
             </TouchableOpacity>
           );
         })}
 
         {filteredTopics.length === 0 && (
           <View style={styles.emptyState}>
-            <Search color={Colors.textLight} size={40} />
+            <Search color={colors.textLight} size={40} />
             <Text style={styles.emptyTitle}>Konu bulunamadı</Text>
             <Text style={styles.emptySub}>Farklı bir arama terimi deneyin</Text>
           </View>
@@ -250,10 +255,10 @@ export default function GrammarLibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -288,12 +293,12 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 13,
-    color: Colors.accentSoft,
+    color: colors.headerSubtitle,
     fontWeight: '500' as const,
   },
   progressValue: {
     fontSize: 13,
-    color: Colors.accentSoft,
+    color: colors.headerSubtitle,
     fontWeight: '500' as const,
   },
   progressBarBg: {
@@ -308,7 +313,7 @@ const styles = StyleSheet.create({
   },
   progressPct: {
     fontSize: 12,
-    color: Colors.accentLight,
+    color: colors.accentLight,
     fontWeight: '600' as const,
     textAlign: 'right',
     marginTop: 4,
@@ -339,18 +344,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   filterChipActive: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   filterChipTextActive: {
     color: '#FFFFFF',
@@ -365,7 +370,7 @@ const styles = StyleSheet.create({
   topicCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     gap: 12,
@@ -388,12 +393,12 @@ const styles = StyleSheet.create({
   topicTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
   },
   topicDesc: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   topicMeta: {
@@ -427,10 +432,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   emptySub: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
 });

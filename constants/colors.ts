@@ -21,6 +21,7 @@ const LightColors = {
   examAccent: '#6366F1',
   locked: '#94A3B8',
   premium: '#D4A843',
+  headerSubtitle: '#F5E6C0',
 };
 
 const DarkColors: typeof LightColors = {
@@ -29,7 +30,7 @@ const DarkColors: typeof LightColors = {
   primaryDark: '#080E1A',
   accent: '#E8C76B',
   accentLight: '#F5D98A',
-  accentSoft: '#3D3420',
+  accentSoft: '#DCC38A', // Lightened for better readability
   background: '#0F1729',
   surface: '#1A2744',
   surfaceAlt: '#1E2E52',
@@ -44,6 +45,7 @@ const DarkColors: typeof LightColors = {
   examAccent: '#818CF8',
   locked: '#4A5568',
   premium: '#E8C76B',
+  headerSubtitle: '#F5D98A',
 };
 
 export function getColors(mode: ThemeMode): typeof LightColors {

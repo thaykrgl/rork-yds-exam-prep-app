@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { X, ChevronRight, CheckCircle, XCircle, Trophy, ArrowLeft, Bookmark, BookmarkCheck } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { questions } from '@/mocks/questions';
 import { passages } from '@/mocks/passages';
 import { useStudy } from '@/providers/StudyProvider';
@@ -18,9 +18,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function QuizScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
   const { category } = useLocalSearchParams<{ category: string }>();
   const { recordAnswer } = useStudy();
   const { isBookmarked, toggleBookmark } = useBookmarkStore();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const quizQuestions = useMemo(() => {
     const filtered = category === 'all'
@@ -98,12 +101,12 @@ export default function QuizScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
-          colors={isGreat ? [Colors.primary, Colors.primaryLight] : [Colors.primary, '#2A3A5C']}
+          colors={isGreat ? [colors.primary, colors.primaryLight] : [colors.primary, '#2A3A5C']}
           style={styles.resultContainer}
         >
           <View style={styles.resultContent}>
-            <View style={[styles.trophyCircle, { backgroundColor: isGreat ? Colors.accent + '30' : 'rgba(255,255,255,0.1)' }]}>
-              <Trophy color={isGreat ? Colors.accent : Colors.textLight} size={48} />
+            <View style={[styles.trophyCircle, { backgroundColor: isGreat ? colors.accent + '30' : 'rgba(255,255,255,0.1)' }]}>
+              <Trophy color={isGreat ? colors.accent : '#FFFFFF'} size={48} />
             </View>
 
             <Text style={styles.resultTitle}>
@@ -119,7 +122,7 @@ export default function QuizScreen() {
             </View>
 
             <TouchableOpacity style={styles.resultButton} activeOpacity={0.8} onPress={handleClose}>
-              <LinearGradient colors={[Colors.accent, Colors.accentLight]} style={styles.resultButtonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+              <LinearGradient colors={[colors.accent, colors.accentLight]} style={styles.resultButtonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
                 <Text style={styles.resultButtonText}>Kapat</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -144,15 +147,15 @@ export default function QuizScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={handleClose} style={styles.closeButton} testID="close-quiz">
-          <X color={Colors.text} size={22} />
+          <X color={colors.text} size={22} />
         </TouchableOpacity>
         <View style={styles.progressContainer}>
           <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: colors.accent }]} />
           </View>
           <Text style={styles.progressText}>{currentIndex + 1}/{quizQuestions.length}</Text>
         </View>
-        <View style={styles.scoreBadge}>
+        <View style={[styles.scoreBadge, { backgroundColor: colors.primary }]}>
           <Text style={styles.scoreText}>{score}</Text>
         </View>
       </View>
@@ -185,9 +188,9 @@ export default function QuizScreen() {
               style={styles.bookmarkButton}
             >
               {isBookmarked(currentQuestion.id) ? (
-                <BookmarkCheck size={20} color={Colors.accent} />
+                <BookmarkCheck size={20} color={colors.accent} />
               ) : (
-                <Bookmark size={20} color={Colors.textLight} />
+                <Bookmark size={20} color={colors.textLight} />
               )}
             </TouchableOpacity>
           </View>
@@ -228,8 +231,8 @@ export default function QuizScreen() {
                       </Text>
                     </View>
                     <Text style={optionTextStyle}>{option}</Text>
-                    {isAnswered && isCorrect && <CheckCircle color={Colors.success} size={20} />}
-                    {isAnswered && isSelected && !isCorrect && <XCircle color={Colors.error} size={20} />}
+                    {isAnswered && isCorrect && <CheckCircle color={colors.success} size={20} />}
+                    {isAnswered && isSelected && !isCorrect && <XCircle color={colors.error} size={20} />}
                   </View>
                 </TouchableOpacity>
               );
@@ -248,11 +251,11 @@ export default function QuizScreen() {
       {isAnswered && (
         <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
           <TouchableOpacity style={styles.nextButton} activeOpacity={0.8} onPress={handleNext} testID="next-question">
-            <LinearGradient colors={[Colors.accent, Colors.accentLight]} style={styles.nextGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <LinearGradient colors={[colors.accent, colors.accentLight]} style={styles.nextGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
               <Text style={styles.nextText}>
                 {currentIndex >= quizQuestions.length - 1 ? 'Sonuçları Gör' : 'Sonraki Soru'}
               </Text>
-              <ChevronRight color={Colors.primary} size={20} />
+              <ChevronRight color={colors.primary} size={20} />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -273,10 +276,10 @@ function getCategoryLabel(cat: QuestionCategory): string {
   return labels[cat];
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   center: {
     alignItems: 'center',
@@ -293,7 +296,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -303,28 +306,26 @@ const styles = StyleSheet.create({
   },
   progressBg: {
     height: 6,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.accent,
     borderRadius: 3,
   },
   progressText: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500' as const,
   },
   scoreBadge: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
   scoreText: {
-    color: Colors.accent,
+    color: colors.accent,
     fontWeight: '700' as const,
     fontSize: 14,
   },
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
   },
   categoryTag: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.primaryLight + '15',
+    backgroundColor: colors.primaryLight + '15',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 8,
@@ -354,12 +355,12 @@ const styles = StyleSheet.create({
   categoryTagText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.primaryLight,
+    color: colors.primaryLight,
   },
   questionText: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 26,
     marginBottom: 24,
   },
@@ -367,23 +368,23 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   option: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   optionSelected: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accentSoft + '30',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft + '30',
   },
   optionCorrect: {
-    borderColor: Colors.success,
-    backgroundColor: Colors.success + '10',
+    borderColor: colors.success,
+    backgroundColor: colors.success + '10',
   },
   optionWrong: {
-    borderColor: Colors.error,
-    backgroundColor: Colors.error + '10',
+    borderColor: colors.error,
+    backgroundColor: colors.error + '10',
   },
   optionRow: {
     flexDirection: 'row',
@@ -394,20 +395,20 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 8,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionLetterCorrect: {
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
   },
   optionLetterWrong: {
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
   },
   optionLetterText: {
     fontSize: 13,
     fontWeight: '700' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   optionLetterTextActive: {
     color: '#FFFFFF',
@@ -415,41 +416,41 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 22,
   },
   optionTextCorrect: {
-    color: Colors.success,
+    color: colors.success,
     fontWeight: '600' as const,
   },
   optionTextWrong: {
-    color: Colors.error,
+    color: colors.error,
   },
   explanationBox: {
     marginTop: 20,
-    backgroundColor: Colors.primary + '08',
+    backgroundColor: colors.primary + '08',
     borderRadius: 14,
     padding: 16,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.accent,
+    borderLeftColor: colors.accent,
   },
   explanationTitle: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 6,
   },
   explanationText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
   },
   nextButton: {
     borderRadius: 14,
@@ -465,7 +466,7 @@ const styles = StyleSheet.create({
   nextText: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: colors.primary,
   },
   resultContainer: {
     flex: 1,
@@ -492,7 +493,7 @@ const styles = StyleSheet.create({
   },
   resultSubtitle: {
     fontSize: 16,
-    color: Colors.accentSoft,
+    color: colors.headerSubtitle,
     marginBottom: 30,
   },
   resultScoreCard: {
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
   resultPercentage: {
     fontSize: 48,
     fontWeight: '800' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   resultLabel: {
     fontSize: 14,
@@ -525,21 +526,21 @@ const styles = StyleSheet.create({
   resultButtonText: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: colors.primary,
   },
   passageContainer: {
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     maxHeight: 250,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.accent,
+    borderLeftColor: colors.accent,
   },
   passageTitle: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 8,
   },
   passageScroll: {
@@ -548,15 +549,15 @@ const styles = StyleSheet.create({
   passageText: {
     fontSize: 14,
     lineHeight: 22,
-    color: Colors.text,
+    color: colors.text,
   },
   emptyText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   backLink: {
     fontSize: 15,
-    color: Colors.accent,
+    color: colors.accent,
     fontWeight: '600' as const,
   },
 });

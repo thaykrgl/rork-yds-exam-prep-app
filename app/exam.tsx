@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { X, Grid3x3, ChevronLeft, ChevronRight, Flag, Send } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { useExamStore } from '@/stores/examStore';
 import { useStudy } from '@/providers/StudyProvider';
 import { useSpacedRepetitionStore } from '@/stores/spacedRepetitionStore';
@@ -28,8 +28,11 @@ import ProgressBar from '@/components/ProgressBar';
 export default function ExamScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ examConfigJson: string }>();
+  const colors = useColors();
   const { saveExamResult } = useStudy();
   const [showGrid, setShowGrid] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const {
     isActive,
@@ -47,19 +50,34 @@ export default function ExamScreen() {
     clearExam,
   } = useExamStore();
 
-  // Initialize exam on mount
+  // Initialize exam on mount or when params change
   useEffect(() => {
-    if (!isActive && params.examConfigJson) {
-      try {
-        const examConfig: ExamConfig = JSON.parse(params.examConfigJson);
-        const selectedQuestions = selectQuestionsForExam(examConfig, questions);
-        startExam(examConfig, selectedQuestions);
-      } catch (e) {
-        Alert.alert('Hata', 'Sınav başlatılamadı.');
-        router.back();
+    if (isActive) return;
+
+    try {
+      let examConfig: ExamConfig;
+      if (params.examConfigJson) {
+        examConfig = JSON.parse(params.examConfigJson);
+      } else {
+        // Default to full simulation if no config provided
+        examConfig = {
+          mode: 'full',
+          questionCount: 80,
+          timeLimitMinutes: 150,
+        };
       }
+
+      const selectedQuestions = selectQuestionsForExam(examConfig, questions);
+      if (selectedQuestions.length === 0) {
+        throw new Error('No questions available for this configuration');
+      }
+      startExam(examConfig, selectedQuestions);
+    } catch (e) {
+      console.error('Exam initialization error:', e);
+      Alert.alert('Hata', 'Sınav başlatılamadı. Lütfen tekrar deneyin.');
+      router.back();
     }
-  }, []);
+  }, [params.examConfigJson, isActive, startExam]);
 
   const handleClose = useCallback(() => {
     Alert.alert(
@@ -101,11 +119,11 @@ export default function ExamScreen() {
             }
           });
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          router.replace({ pathname: '/exam-result', params: { examResultId: result.id } });
+          router.replace({ pathname: '/exam-result' as any, params: { examResultId: result.id } });
         },
       },
     ]);
-  }, [answers, submitExam, saveExamResult, router]);
+  }, [answers, submitExam, saveExamResult, router, examQuestions]);
 
   const handleTimerExpire = useCallback(() => {
     const result = submitExam();
@@ -120,9 +138,9 @@ export default function ExamScreen() {
     });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert('Süre Doldu', 'Sınav süreniz doldu. Sonuçlarınız hesaplanıyor.', [
-      { text: 'Tamam', onPress: () => router.replace({ pathname: '/exam-result', params: { examResultId: result.id } }) },
+      { text: 'Tamam', onPress: () => router.replace({ pathname: '/exam-result' as any, params: { examResultId: result.id } }) },
     ]);
-  }, [submitExam, saveExamResult, router]);
+  }, [submitExam, saveExamResult, router, examQuestions]);
 
   const handleSelectAnswer = useCallback((index: number) => {
     if (!examQuestions[currentIndex]) return;
@@ -163,7 +181,7 @@ export default function ExamScreen() {
       {/* Top Bar */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <X size={22} color={Colors.surface} />
+          <X size={22} color="#FFFFFF" />
         </TouchableOpacity>
 
         <Timer
@@ -179,9 +197,9 @@ export default function ExamScreen() {
         </View>
 
         <TouchableOpacity onPress={() => setShowGrid(true)} style={styles.gridButton}>
-          <Grid3x3 size={22} color={Colors.surface} />
+          <Grid3x3 size={22} color="#FFFFFF" />
           {flaggedCount > 0 && (
-            <View style={styles.flagBadge}>
+            <View style={[styles.flagBadge, { backgroundColor: colors.warning }]}>
               <Text style={styles.flagBadgeText}>{flaggedCount}</Text>
             </View>
           )}
@@ -190,7 +208,7 @@ export default function ExamScreen() {
 
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
-        <ProgressBar progress={answeredCount / examQuestions.length} height={4} color={Colors.accent} />
+        <ProgressBar progress={answeredCount / examQuestions.length} height={4} color={colors.accent} />
       </View>
 
       {/* Question Content */}
@@ -213,7 +231,7 @@ export default function ExamScreen() {
           onPress={prevQuestion}
           disabled={currentIndex === 0}
         >
-          <ChevronLeft size={20} color={currentIndex === 0 ? Colors.textLight : Colors.text} />
+          <ChevronLeft size={20} color={currentIndex === 0 ? colors.textLight : colors.text} />
           <Text style={[styles.navButtonText, currentIndex === 0 && styles.navButtonTextDisabled]}>Önceki</Text>
         </TouchableOpacity>
 
@@ -223,20 +241,20 @@ export default function ExamScreen() {
         >
           <Flag
             size={18}
-            color={currentAnswer?.isFlagged ? Colors.warning : Colors.textSecondary}
-            fill={currentAnswer?.isFlagged ? Colors.warning : 'none'}
+            color={currentAnswer?.isFlagged ? colors.warning : colors.textSecondary}
+            fill={currentAnswer?.isFlagged ? colors.warning : 'none'}
           />
         </TouchableOpacity>
 
         {isLastQuestion ? (
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Send size={18} color={Colors.primary} />
+          <TouchableOpacity style={[styles.submitButton, { backgroundColor: colors.accent }]} onPress={handleSubmit}>
+            <Send size={18} color={colors.primary} />
             <Text style={styles.submitButtonText}>Bitir</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.navButton} onPress={nextQuestion}>
             <Text style={styles.navButtonText}>Sonraki</Text>
-            <ChevronRight size={20} color={Colors.text} />
+            <ChevronRight size={20} color={colors.text} />
           </TouchableOpacity>
         )}
       </View>
@@ -254,21 +272,21 @@ export default function ExamScreen() {
                 )}
               </View>
               <TouchableOpacity onPress={() => setShowGrid(false)} style={styles.modalCloseButton}>
-                <X size={20} color={Colors.text} />
+                <X size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.gridLegend}>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: Colors.surfaceAlt }]} />
+                <View style={[styles.legendDot, { backgroundColor: colors.surfaceAlt }]} />
                 <Text style={styles.legendText}>Boş</Text>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: Colors.accent }]} />
+                <View style={[styles.legendDot, { backgroundColor: colors.accent }]} />
                 <Text style={styles.legendText}>Cevaplandı</Text>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: Colors.warning }]} />
+                <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
                 <Text style={styles.legendText}>İşaretli</Text>
               </View>
             </View>
@@ -308,7 +326,7 @@ export default function ExamScreen() {
               </View>
             </ScrollView>
 
-            <TouchableOpacity style={styles.modalDoneButton} onPress={() => setShowGrid(false)}>
+            <TouchableOpacity style={[styles.modalDoneButton, { backgroundColor: colors.primary }]} onPress={() => setShowGrid(false)}>
               <Text style={styles.modalDoneText}>Kapat</Text>
             </TouchableOpacity>
           </View>
@@ -318,20 +336,20 @@ export default function ExamScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   topBar: {
     flexDirection: 'row',
@@ -339,7 +357,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   closeButton: {
     width: 36,
@@ -361,7 +379,7 @@ const styles = StyleSheet.create({
   counterText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.surface,
+    color: '#FFFFFF',
     fontVariant: ['tabular-nums'],
   },
   gridButton: {
@@ -376,7 +394,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: Colors.warning,
     borderRadius: 8,
     width: 16,
     height: 16,
@@ -405,9 +422,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
   },
   navButton: {
     flexDirection: 'row',
@@ -416,7 +433,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     gap: 4,
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
   },
   navButtonDisabled: {
     opacity: 0.4,
@@ -424,10 +441,10 @@ const styles = StyleSheet.create({
   navButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text,
+    color: colors.text,
   },
   navButtonTextDisabled: {
-    color: Colors.textLight,
+    color: colors.textLight,
   },
   flagButton: {
     width: 44,
@@ -435,10 +452,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
   },
   flagButtonActive: {
-    backgroundColor: Colors.warning + '20',
+    backgroundColor: colors.warning + '20',
   },
   submitButton: {
     flexDirection: 'row',
@@ -447,12 +464,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     gap: 6,
-    backgroundColor: Colors.accent,
   },
   submitButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.primary,
+    color: colors.primary,
   },
   // Modal styles
   modalOverlay: {
@@ -463,7 +479,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 20,
     width: '100%',
@@ -475,7 +491,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   modalStats: {
@@ -484,11 +500,11 @@ const styles = StyleSheet.create({
   },
   modalStatText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   modalFlagText: {
     fontSize: 13,
-    color: Colors.warning,
+    color: colors.warning,
     fontWeight: '600',
   },
   modalCloseButton: {
@@ -514,7 +530,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   gridScroll: {
     maxHeight: 350,
@@ -530,42 +546,41 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   gridItemAnswered: {
-    backgroundColor: Colors.accent + '20',
+    backgroundColor: colors.accent + '20',
   },
   gridItemFlagged: {
-    borderColor: Colors.warning,
+    borderColor: colors.warning,
   },
   gridItemCurrent: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
   },
   gridItemText: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   gridItemTextAnswered: {
-    color: Colors.accent,
+    color: colors.accent,
   },
   gridItemTextCurrent: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: '700',
   },
   modalDoneButton: {
     marginTop: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.primary,
     borderRadius: 12,
     alignItems: 'center',
   },
   modalDoneText: {
     fontSize: 15,
     fontWeight: '700',
-    color: Colors.surface,
+    color: '#FFFFFF',
   },
 });

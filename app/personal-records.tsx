@@ -9,7 +9,7 @@ import {
   ChevronRight, Trophy, Flame, Target, Zap, FileText,
   PenTool, BookOpen, TrendingUp, TrendingDown, Minus, Award,
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePersonalRecordsStore, WeeklyComparison } from '@/stores/personalRecordsStore';
 import { useAnalyticsStore } from '@/stores/analyticsStore';
@@ -21,9 +21,12 @@ const recordIcons: Record<string, React.ComponentType<{ color: string; size: num
 export default function PersonalRecordsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
   const { stats } = useStudy();
   const { updateRecords, getTopRecords, getMilestones, getWeeklyComparison } = usePersonalRecordsStore();
   const dailyRecords = useAnalyticsStore(s => s.dailyRecords);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Update records whenever stats change
   useEffect(() => {
@@ -61,7 +64,7 @@ export default function PersonalRecordsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.primaryLight]}
+        colors={[colors.primary, colors.primaryLight]}
         style={[styles.header, { paddingTop: insets.top + 12 }]}
       >
         <View style={styles.headerRow}>
@@ -90,7 +93,7 @@ export default function PersonalRecordsScreen() {
             const isUp = item.change > 0;
             const isDown = item.change < 0;
             const ChangeIcon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
-            const changeColor = isUp ? Colors.success : isDown ? Colors.error : Colors.textLight;
+            const changeColor = isUp ? colors.success : isDown ? colors.error : colors.textLight;
 
             return (
               <View key={i} style={styles.weeklyCard}>
@@ -123,7 +126,7 @@ export default function PersonalRecordsScreen() {
                 >
                   {index === 0 && (
                     <LinearGradient
-                      colors={[Colors.accent + '20', Colors.accentLight + '08']}
+                      colors={[colors.accent + '20', colors.accentLight + '08']}
                       style={styles.recordFirstGradient}
                     />
                   )}
@@ -148,7 +151,7 @@ export default function PersonalRecordsScreen() {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Trophy color={Colors.textLight} size={40} />
+            <Trophy color={colors.textLight} size={40} />
             <Text style={styles.emptyTitle}>Henüz rekor yok</Text>
             <Text style={styles.emptySub}>Soru çözerek rekor kırmaya başla!</Text>
           </View>
@@ -189,10 +192,10 @@ export default function PersonalRecordsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -219,7 +222,7 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontSize: 14,
-    color: Colors.accentSoft,
+    color: colors.headerSubtitle,
     textAlign: 'center',
   },
   content: {
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 14,
     marginTop: 8,
   },
@@ -242,7 +245,7 @@ const styles = StyleSheet.create({
   },
   weeklyCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     alignItems: 'center',
@@ -250,13 +253,13 @@ const styles = StyleSheet.create({
   },
   weeklyLabel: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500' as const,
   },
   weeklyValue: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   weeklyChange: {
     flexDirection: 'row',
@@ -275,7 +278,7 @@ const styles = StyleSheet.create({
   },
   recordCard: {
     width: '47%' as any,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
@@ -286,7 +289,7 @@ const styles = StyleSheet.create({
   recordCardFirst: {
     width: '100%',
     borderWidth: 1.5,
-    borderColor: Colors.accent + '30',
+    borderColor: colors.accent + '30',
   },
   recordFirstGradient: {
     ...StyleSheet.absoluteFillObject,
@@ -302,7 +305,7 @@ const styles = StyleSheet.create({
   recordTitle: {
     fontSize: 12,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   recordTitleFirst: {
@@ -312,15 +315,15 @@ const styles = StyleSheet.create({
   recordValue: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   recordValueFirst: {
     fontSize: 24,
-    color: Colors.accent,
+    color: colors.accent,
   },
   recordDate: {
     fontSize: 10,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
   emptyState: {
     alignItems: 'center',
@@ -331,16 +334,16 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   emptySub: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   milestoneCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -359,15 +362,15 @@ const styles = StyleSheet.create({
   milestoneTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   milestoneSub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   milestoneDate: {
     fontSize: 11,
-    color: Colors.textLight,
+    color: colors.textLight,
   },
 });

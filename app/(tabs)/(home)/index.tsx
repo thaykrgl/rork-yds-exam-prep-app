@@ -164,7 +164,10 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.examCard}
           activeOpacity={0.7}
-          onPress={() => router.push('/exam' as any)}
+          onPress={() => {
+            const config = { mode: 'full', questionCount: 80, timeLimitMinutes: 150 };
+            router.push({ pathname: '/exam' as any, params: { examConfigJson: JSON.stringify(config) } });
+          }}
         >
           <LinearGradient
             colors={[colors.examAccent, colors.examAccent + 'CC']}
@@ -287,7 +290,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: colors.accentSoft,
+    color: colors.headerSubtitle,
     marginBottom: 20,
   },
   dailyCard: {

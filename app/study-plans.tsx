@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X, Calendar, Target, Zap, AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { useStudyPlanStore } from '@/stores/studyPlanStore';
 import { studyPlans } from '@/data/studyPlans';
 import ProgressBar from '@/components/ProgressBar';
@@ -25,8 +25,10 @@ const planColors: Record<StudyPlanId, string> = {
 export default function StudyPlansScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
   const { activePlan, startPlan, abandonPlan, getPlanProgress } = useStudyPlanStore();
 
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const progress = getPlanProgress();
 
   const handleStartPlan = (planId: StudyPlanId) => {
@@ -63,7 +65,7 @@ export default function StudyPlansScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-          <X size={22} color={Colors.text} />
+          <X size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Çalışma Planları</Text>
         <View style={{ width: 36 }} />
@@ -130,11 +132,11 @@ export default function StudyPlansScreen() {
                 </View>
                 <Text style={styles.planDescription}>{plan.description}</Text>
                 <View style={styles.planMeta}>
-                  <Calendar size={12} color={Colors.textLight} />
+                  <Calendar size={12} color={colors.textLight} />
                   <Text style={styles.planMetaText}>{plan.durationDays} gün · {plan.tasks.length} görev</Text>
                 </View>
               </View>
-              <ChevronRight size={18} color={Colors.textLight} />
+              <ChevronRight size={18} color={colors.textLight} />
             </TouchableOpacity>
           );
         })}
@@ -145,17 +147,17 @@ export default function StudyPlansScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
   closeButton: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: Colors.text },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
   content: { paddingHorizontal: 20, paddingTop: 8 },
   activePlanCard: { borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   activePlanGradient: { padding: 20, borderRadius: 16 },
@@ -164,25 +166,25 @@ const styles = StyleSheet.create({
   activePlanTitle: { fontSize: 18, fontWeight: '700', color: '#FFFFFF', marginBottom: 12 },
   activePlanProgress: { gap: 6 },
   activePlanProgressText: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
-  activePlanArrow: { position: 'absolute', right: 16, top: '50%' },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 4 },
-  sectionSubtitle: { fontSize: 13, color: Colors.textSecondary, marginBottom: 16 },
+  activePlanArrow: { position: 'absolute', right: 16, top: '50%', marginTop: -10 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  sectionSubtitle: { fontSize: 13, color: colors.textSecondary, marginBottom: 16 },
   planCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.surface, borderRadius: 14,
+    backgroundColor: colors.surface, borderRadius: 14,
     padding: 16, marginBottom: 12, gap: 14,
   },
-  planCardActive: { borderWidth: 2, borderColor: Colors.accent },
+  planCardActive: { borderWidth: 2, borderColor: colors.accent },
   planIcon: {
     width: 48, height: 48, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
   planInfo: { flex: 1 },
   planTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  planTitle: { fontSize: 15, fontWeight: '600', color: Colors.text },
+  planTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
   activeBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   activeBadgeText: { fontSize: 10, fontWeight: '700', color: '#FFFFFF' },
-  planDescription: { fontSize: 12, color: Colors.textSecondary, marginTop: 4, lineHeight: 18 },
+  planDescription: { fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 18 },
   planMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  planMetaText: { fontSize: 11, color: Colors.textLight },
+  planMetaText: { fontSize: 11, color: colors.textLight },
 });

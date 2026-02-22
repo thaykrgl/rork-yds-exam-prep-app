@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { CheckCircle, XCircle, Flag } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { Question, Passage } from '@/types';
 
 interface QuestionCardProps {
@@ -16,12 +16,6 @@ interface QuestionCardProps {
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
-const difficultyConfig = {
-  easy: { label: 'Kolay', color: Colors.success },
-  medium: { label: 'Orta', color: Colors.warning },
-  hard: { label: 'Zor', color: Colors.error },
-};
-
 export default function QuestionCard({
   question,
   selectedAnswer,
@@ -31,6 +25,15 @@ export default function QuestionCard({
   onSelectAnswer,
   passage,
 }: QuestionCardProps) {
+  const colors = useColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
+  const difficultyConfig = {
+    easy: { label: 'Kolay', color: colors.success },
+    medium: { label: 'Orta', color: colors.warning },
+    hard: { label: 'Zor', color: colors.error },
+  };
+
   const difficulty = difficultyConfig[question.difficulty];
 
   const getOptionStyle = (index: number) => {
@@ -84,7 +87,7 @@ export default function QuestionCard({
         </View>
         {isFlagged && (
           <View style={styles.flagBadge}>
-            <Flag size={12} color={Colors.warning} fill={Colors.warning} />
+            <Flag size={12} color={colors.warning} fill={colors.warning} />
             <Text style={styles.flagText}>İşaretli</Text>
           </View>
         )}
@@ -114,10 +117,10 @@ export default function QuestionCard({
                 {option}
               </Text>
               {!examMode && isAnswered && index === question.correctAnswer && (
-                <CheckCircle size={20} color={Colors.success} style={styles.icon} />
+                <CheckCircle size={20} color={colors.success} style={styles.icon} />
               )}
               {!examMode && isAnswered && index === selectedAnswer && index !== question.correctAnswer && (
-                <XCircle size={20} color={Colors.error} style={styles.icon} />
+                <XCircle size={20} color={colors.error} style={styles.icon} />
               )}
             </TouchableOpacity>
           );
@@ -135,23 +138,23 @@ export default function QuestionCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
   passageContainer: {
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     maxHeight: 250,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.accent,
+    borderLeftColor: colors.accent,
   },
   passageTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 8,
   },
   passageScroll: {
@@ -160,7 +163,7 @@ const styles = StyleSheet.create({
   passageText: {
     fontSize: 14,
     lineHeight: 22,
-    color: Colors.text,
+    color: colors.text,
   },
   badgeRow: {
     flexDirection: 'row',
@@ -184,17 +187,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    backgroundColor: Colors.warning + '20',
+    backgroundColor: colors.warning + '20',
   },
   flagText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.warning,
+    color: colors.warning,
   },
   questionText: {
     fontSize: 17,
     fontWeight: '600',
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 26,
     marginBottom: 20,
   },
@@ -209,20 +212,20 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   optionDefault: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
   },
   optionSelected: {
-    backgroundColor: Colors.accent + '15',
-    borderColor: Colors.accent,
+    backgroundColor: colors.accent + '15',
+    borderColor: colors.accent,
   },
   optionCorrect: {
-    backgroundColor: Colors.success + '10',
-    borderColor: Colors.success,
+    backgroundColor: colors.success + '10',
+    borderColor: colors.success,
   },
   optionWrong: {
-    backgroundColor: Colors.error + '10',
-    borderColor: Colors.error,
+    backgroundColor: colors.error + '10',
+    borderColor: colors.error,
   },
   letterContainer: {
     width: 32,
@@ -233,32 +236,32 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   letterDefault: {
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
   },
   letterSelected: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
   },
   letterCorrect: {
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
   },
   letterWrong: {
-    backgroundColor: Colors.error,
+    backgroundColor: colors.error,
   },
   letterText: {
     fontSize: 14,
     fontWeight: '700',
   },
   optionTextDefault: {
-    color: Colors.text,
+    color: colors.text,
   },
   optionTextSelected: {
-    color: Colors.accent,
+    color: colors.accent,
   },
   optionTextCorrect: {
-    color: Colors.success,
+    color: colors.success,
   },
   optionTextWrong: {
-    color: Colors.error,
+    color: colors.error,
   },
   optionText: {
     flex: 1,
@@ -271,20 +274,20 @@ const styles = StyleSheet.create({
   explanationContainer: {
     marginTop: 16,
     padding: 14,
-    backgroundColor: Colors.accent + '10',
+    backgroundColor: colors.accent + '10',
     borderRadius: 12,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.accent,
+    borderLeftColor: colors.accent,
   },
   explanationTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.accent,
+    color: colors.accent,
     marginBottom: 6,
   },
   explanationText: {
     fontSize: 14,
     lineHeight: 21,
-    color: Colors.text,
+    color: colors.text,
   },
 });

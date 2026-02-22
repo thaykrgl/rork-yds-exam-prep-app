@@ -143,7 +143,7 @@ export default function ExamResultScreen() {
                 <Text style={styles.categoryScore}>
                   {cat.correct}/{cat.total}
                 </Text>
-                <div style={{ flex: 1 }} />
+                <View style={{ flex: 1 }} />
                 <View style={[
                   styles.categoryPercentBadge,
                   { backgroundColor: cat.percentage >= 70 ? colors.success + '15' : cat.percentage >= 40 ? colors.warning + '15' : colors.error + '15' }
@@ -362,7 +362,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: colors.accentSoft,
+    color: colors.headerSubtitle,
   },
   statValue: {
     fontSize: 18,
