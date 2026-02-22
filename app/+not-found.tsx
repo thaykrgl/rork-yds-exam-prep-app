@@ -1,16 +1,16 @@
-// template
 import { Link, Stack } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
+import Colors from "@/constants/colors";
 
 export default function NotFoundScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: "Oops!" }} />
+      <Stack.Screen options={{ title: "Sayfa Bulunamadı" }} />
       <View style={styles.container}>
-        <Text style={styles.title}>This screen doesn&apos;t exist.</Text>
-
+        <Text style={styles.emoji}>📚</Text>
+        <Text style={styles.title}>Bu sayfa bulunamadı</Text>
         <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>Go to home screen!</Text>
+          <Text style={styles.linkText}>Ana Sayfaya Dön</Text>
         </Link>
       </View>
     </>
@@ -23,17 +23,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
+    backgroundColor: Colors.background,
+  },
+  emoji: {
+    fontSize: 48,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.text,
   },
   link: {
-    marginTop: 15,
-    paddingVertical: 15,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
   },
   linkText: {
     fontSize: 14,
-    color: "#2e78b7",
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });
