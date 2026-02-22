@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,15 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Trophy, Clock, Target, Home, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { Trophy, Clock, Target, Home, RotateCcw, ChevronDown, ChevronUp, Share2 } from 'lucide-react-native';
+import { useColors } from '@/hooks/useColors';
+import { useThemeStore } from '@/stores/themeStore';
+import { shareTextResult, generateShareMessage } from '@/utils/sharing';
 import { useStudy } from '@/providers/StudyProvider';
 import { questions as allQuestions } from '@/mocks/questions';
 import { formatDuration } from '@/utils/examUtils';
 import { ExamResult, CategoryBreakdown } from '@/types';
 import ProgressBar from '@/components/ProgressBar';
-import { useState } from 'react';
 
 const categoryNames: Record<string, string> = {
   vocabulary: 'Kelime Bilgisi',
@@ -39,9 +40,13 @@ const categoryColors: Record<string, string> = {
 
 export default function ExamResultScreen() {
   const router = useRouter();
+  const colors = useColors();
+  const { mode: themeMode } = useThemeStore();
   const params = useLocalSearchParams<{ examResultId: string }>();
   const { stats } = useStudy();
   const [showDetails, setShowDetails] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const result: ExamResult | undefined = useMemo(() => {
     return stats.examHistory.find(r => r.id === params.examResultId);
@@ -52,7 +57,7 @@ export default function ExamResultScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Sınav sonucu bulunamadı.</Text>
-          <TouchableOpacity style={styles.homeButton} onPress={() => router.replace('/(tabs)')}>
+          <TouchableOpacity style={styles.homeButton} onPress={() => router.replace('/(tabs)' as any)}>
             <Text style={styles.homeButtonText}>Ana Sayfaya Dön</Text>
           </TouchableOpacity>
         </View>
@@ -66,20 +71,30 @@ export default function ExamResultScreen() {
 
   const handleRetry = () => {
     const examConfigJson = JSON.stringify(result.config);
-    router.replace({ pathname: '/exam', params: { examConfigJson } });
+    router.replace({ pathname: '/exam' as any, params: { examConfigJson } });
+  };
+
+  const handleShare = async () => {
+    const msg = generateShareMessage(result.score, result.totalQuestions, modeLabel);
+    await shareTextResult('YDS Başarısı!', msg);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'} />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <LinearGradient
-          colors={isGoodScore ? [Colors.primary, Colors.primaryLight] : [Colors.primary, '#2A3A5C']}
+          colors={[colors.primary, colors.primaryLight]}
           style={styles.header}
         >
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={handleShare} style={styles.shareIconBtn} activeOpacity={0.7}>
+              <Share2 color="#FFFFFF" size={22} />
+            </TouchableOpacity>
+          </View>
           <View style={styles.trophyContainer}>
-            <Trophy size={48} color={isGoodScore ? Colors.accent : Colors.textLight} />
+            <Trophy size={48} color={isGoodScore ? colors.accent : colors.textLight} />
           </View>
 
           <Text style={styles.resultTitle}>
@@ -94,8 +109,8 @@ export default function ExamResultScreen() {
               <Text style={styles.scoreDivider}>/</Text>
               <Text style={styles.scoreTotal}>{result.totalQuestions}</Text>
             </View>
-            <View style={[styles.percentBadge, { backgroundColor: isGoodScore ? Colors.success + '20' : Colors.warning + '20' }]}>
-              <Text style={[styles.percentText, { color: isGoodScore ? Colors.success : Colors.warning }]}>
+            <View style={[styles.percentBadge, { backgroundColor: isGoodScore ? colors.success + '20' : colors.warning + '20' }]}>
+              <Text style={[styles.percentText, { color: isGoodScore ? colors.success : colors.warning }]}>
                 %{percentage}
               </Text>
             </View>
@@ -104,13 +119,13 @@ export default function ExamResultScreen() {
           {/* Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Target size={18} color={Colors.accent} />
+              <Target size={18} color={colors.accent} />
               <Text style={styles.statLabel}>Tahmini YDS</Text>
               <Text style={styles.statValue}>{result.estimatedYDSScore}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Clock size={18} color={Colors.accent} />
+              <Clock size={18} color={colors.accent} />
               <Text style={styles.statLabel}>Süre</Text>
               <Text style={styles.statValue}>{formatDuration(result.timeSpentSeconds)}</Text>
             </View>
@@ -123,18 +138,19 @@ export default function ExamResultScreen() {
           {result.categoryBreakdown.map((cat: CategoryBreakdown) => (
             <View key={cat.category} style={styles.categoryRow}>
               <View style={styles.categoryHeader}>
-                <View style={[styles.categoryDot, { backgroundColor: categoryColors[cat.category] || Colors.accent }]} />
+                <View style={[styles.categoryDot, { backgroundColor: categoryColors[cat.category] || colors.accent }]} />
                 <Text style={styles.categoryName}>{categoryNames[cat.category] || cat.category}</Text>
                 <Text style={styles.categoryScore}>
                   {cat.correct}/{cat.total}
                 </Text>
+                <div style={{ flex: 1 }} />
                 <View style={[
                   styles.categoryPercentBadge,
-                  { backgroundColor: cat.percentage >= 70 ? Colors.success + '15' : cat.percentage >= 40 ? Colors.warning + '15' : Colors.error + '15' }
+                  { backgroundColor: cat.percentage >= 70 ? colors.success + '15' : cat.percentage >= 40 ? colors.warning + '15' : colors.error + '15' }
                 ]}>
                   <Text style={[
                     styles.categoryPercentText,
-                    { color: cat.percentage >= 70 ? Colors.success : cat.percentage >= 40 ? Colors.warning : Colors.error }
+                    { color: cat.percentage >= 70 ? colors.success : cat.percentage >= 40 ? colors.warning : colors.error }
                   ]}>
                     %{cat.percentage}
                   </Text>
@@ -143,7 +159,7 @@ export default function ExamResultScreen() {
               <ProgressBar
                 progress={cat.percentage / 100}
                 height={6}
-                color={categoryColors[cat.category] || Colors.accent}
+                color={categoryColors[cat.category] || colors.accent}
                 style={styles.categoryProgress}
               />
             </View>
@@ -158,9 +174,9 @@ export default function ExamResultScreen() {
           >
             <Text style={styles.detailsToggleText}>Soru Detayları</Text>
             {showDetails ? (
-              <ChevronUp size={20} color={Colors.textSecondary} />
+              <ChevronUp size={20} color={colors.textLight} />
             ) : (
-              <ChevronDown size={20} color={Colors.textSecondary} />
+              <ChevronDown size={20} color={colors.textLight} />
             )}
           </TouchableOpacity>
 
@@ -179,20 +195,20 @@ export default function ExamResultScreen() {
                     styles.answerBadge,
                     {
                       backgroundColor: isUnanswered
-                        ? Colors.textLight + '20'
+                        ? colors.textLight + '20'
                         : isCorrect
-                          ? Colors.success + '15'
-                          : Colors.error + '15'
+                          ? colors.success + '15'
+                          : colors.error + '15'
                     }
                   ]}>
                     <Text style={[
                       styles.answerBadgeText,
                       {
                         color: isUnanswered
-                          ? Colors.textLight
+                          ? colors.textLight
                           : isCorrect
-                            ? Colors.success
-                            : Colors.error
+                            ? colors.success
+                            : colors.error
                       }
                     ]}>
                       {isUnanswered ? 'Boş' : isCorrect ? 'Doğru' : 'Yanlış'}
@@ -215,11 +231,11 @@ export default function ExamResultScreen() {
         {/* Action Buttons */}
         <View style={styles.actions}>
           <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
-            <RotateCcw size={18} color={Colors.surface} />
+            <RotateCcw size={18} color="#FFFFFF" />
             <Text style={styles.retryButtonText}>Tekrar Dene</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.homeActionButton} onPress={() => router.replace('/(tabs)')}>
-            <Home size={18} color={Colors.primary} />
+          <TouchableOpacity style={styles.homeActionButton} onPress={() => router.replace('/(tabs)' as any)}>
+            <Home size={18} color={colors.primary} />
             <Text style={styles.homeActionText}>Ana Sayfa</Text>
           </TouchableOpacity>
         </View>
@@ -230,10 +246,29 @@ export default function ExamResultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
+  },
+  header: {
+    padding: 24,
+    paddingTop: 8,
+    alignItems: 'center',
+  },
+  headerActions: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+  },
+  shareIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorContainer: {
     flex: 1,
@@ -243,24 +278,19 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 16,
   },
   homeButton: {
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
   },
   homeButtonText: {
-    color: Colors.surface,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 15,
-  },
-  header: {
-    padding: 24,
-    paddingTop: 16,
-    alignItems: 'center',
   },
   trophyContainer: {
     width: 80,
@@ -274,12 +304,12 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.surface,
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   resultSubtitle: {
     fontSize: 14,
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
     marginBottom: 20,
   },
   scoreRow: {
@@ -295,18 +325,18 @@ const styles = StyleSheet.create({
   scoreNumber: {
     fontSize: 48,
     fontWeight: '800',
-    color: Colors.accent,
+    color: colors.accent,
   },
   scoreDivider: {
     fontSize: 32,
     fontWeight: '300',
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
     marginHorizontal: 4,
   },
   scoreTotal: {
     fontSize: 28,
     fontWeight: '600',
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
   },
   percentBadge: {
     paddingHorizontal: 14,
@@ -332,12 +362,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
   },
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.surface,
+    color: '#FFFFFF',
   },
   statDivider: {
     width: 1,
@@ -351,12 +381,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 16,
   },
   categoryRow: {
     marginBottom: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 14,
     borderRadius: 12,
   },
@@ -375,12 +405,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text,
+    color: colors.text,
   },
   categoryScore: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginRight: 8,
   },
   categoryPercentBadge: {
@@ -401,17 +431,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 14,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     marginBottom: 8,
   },
   detailsToggleText: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.text,
+    color: colors.text,
   },
   answerDetail: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 12,
     borderRadius: 10,
     marginBottom: 6,
@@ -425,7 +455,7 @@ const styles = StyleSheet.create({
   answerNumber: {
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   answerBadge: {
     paddingHorizontal: 8,
@@ -438,12 +468,12 @@ const styles = StyleSheet.create({
   },
   answerQuestion: {
     fontSize: 13,
-    color: Colors.text,
+    color: colors.text,
     lineHeight: 19,
   },
   correctAnswerText: {
     fontSize: 12,
-    color: Colors.success,
+    color: colors.success,
     marginTop: 4,
     fontWeight: '600',
   },
@@ -456,30 +486,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 14,
   },
   retryButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.surface,
+    color: '#FFFFFF',
   },
   homeActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingVertical: 16,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   homeActionText: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.primary,
+    color: colors.primary,
   },
   bottomPadding: {
     height: 40,

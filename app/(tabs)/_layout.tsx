@@ -2,18 +2,21 @@ import { Tabs } from "expo-router";
 import { Home, Dumbbell, BookOpen, User } from "lucide-react-native";
 import React from "react";
 import { Platform } from "react-native";
-import Colors from "@/constants/colors";
+import { useColors } from "@/hooks/useColors";
 
 export default function TabLayout() {
+  const colors = useColors();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.accent,
-        tabBarInactiveTintColor: Colors.textLight,
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textLight,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.primary,
+          backgroundColor: colors.primary,
           borderTopWidth: 0,
+          borderTopColor: colors.border,
           ...(Platform.OS === 'web' ? { height: 60 } : {}),
         },
         tabBarLabelStyle: {

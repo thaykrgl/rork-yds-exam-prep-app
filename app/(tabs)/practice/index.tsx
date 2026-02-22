@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Play, BookOpen, PenTool, FileText, Languages, Puzzle, Shuffle, Clock, Zap, Timer, Newspaper, Bookmark, Calendar, ChevronRight, Library } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { studyCategories, questions } from '@/mocks/questions';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePremiumStore } from '@/stores/premiumStore';
@@ -27,6 +27,7 @@ const categoryIcons: Record<string, React.ComponentType<{ color: string; size: n
 export default function PracticeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
   const { stats } = useStudy();
   const bookmarkCount = useBookmarkStore((s) => s.getBookmarkCount());
   const { activePlan, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
@@ -34,6 +35,8 @@ export default function PracticeScreen() {
   const grammarTotalTopics = useGrammarStore(s => s.getTotalTopics());
   const [selectedCategory, setSelectedCategory] = useState<QuestionCategory | 'all'>('all');
   const [showPaywall, setShowPaywall] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const questionCount = useMemo(() => {
     if (selectedCategory === 'all') return questions.length;
@@ -70,7 +73,7 @@ export default function PracticeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>Pratik Yap</Text>
         <Text style={styles.headerSubtitle}>Kategori seç ve soru çözmeye başla</Text>
       </LinearGradient>
@@ -85,10 +88,10 @@ export default function PracticeScreen() {
             onPress={() => handleStartExam('full')}
           >
             <LinearGradient
-              colors={[Colors.examAccent + '15', Colors.examAccent + '05']}
+              colors={[colors.examAccent + '15', colors.examAccent + '05']}
               style={styles.examCardGradient}
             >
-              <Timer color={Colors.examAccent} size={24} />
+              <Timer color={colors.examAccent} size={24} />
               <View style={styles.examCardContent}>
                 <Text style={styles.examCardTitle}>Tam Simülasyon</Text>
                 <Text style={styles.examCardDesc}>80 soru · 150 dakika</Text>
@@ -102,10 +105,10 @@ export default function PracticeScreen() {
             onPress={handleMiniExam}
           >
             <LinearGradient
-              colors={[Colors.accent + '15', Colors.accent + '05']}
+              colors={[colors.accent + '15', colors.accent + '05']}
               style={styles.examCardGradient}
             >
-              <Clock color={Colors.accent} size={24} />
+              <Clock color={colors.accent} size={24} />
               <View style={styles.examCardContent}>
                 <Text style={styles.examCardTitle}>Mini Sınav</Text>
                 <Text style={styles.examCardDesc}>20/40/80 soru · sen seç</Text>
@@ -121,8 +124,8 @@ export default function PracticeScreen() {
           onPress={() => router.push('/study-plans' as any)}
         >
           <View style={styles.studyPlanLeft}>
-            <View style={[styles.studyPlanIcon, { backgroundColor: Colors.examAccent + '15' }]}>
-              <Calendar size={20} color={Colors.examAccent} />
+            <View style={[styles.studyPlanIcon, { backgroundColor: colors.examAccent + '15' }]}>
+              <Calendar size={20} color={colors.examAccent} />
             </View>
             <View style={styles.studyPlanInfo}>
               <Text style={styles.studyPlanTitle}>Çalışma Planları</Text>
@@ -131,7 +134,7 @@ export default function PracticeScreen() {
               </Text>
             </View>
           </View>
-          <ChevronRight size={18} color={Colors.textLight} />
+          <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
 
         {/* Bookmarked Questions */}
@@ -142,15 +145,15 @@ export default function PracticeScreen() {
             onPress={() => router.push('/bookmarked-quiz' as any)}
           >
             <View style={styles.studyPlanLeft}>
-              <View style={[styles.studyPlanIcon, { backgroundColor: Colors.accent + '15' }]}>
-                <Bookmark size={20} color={Colors.accent} />
+              <View style={[styles.studyPlanIcon, { backgroundColor: colors.accent + '15' }]}>
+                <Bookmark size={20} color={colors.accent} />
               </View>
               <View style={styles.studyPlanInfo}>
                 <Text style={styles.studyPlanTitle}>Kaydedilen Sorular</Text>
                 <Text style={styles.studyPlanSub}>{bookmarkCount} kayıtlı soru</Text>
               </View>
             </View>
-            <ChevronRight size={18} color={Colors.textLight} />
+            <ChevronRight size={18} color={colors.textLight} />
           </TouchableOpacity>
         )}
 
@@ -169,7 +172,7 @@ export default function PracticeScreen() {
               <Text style={styles.studyPlanSub}>{grammarReadCount}/{grammarTotalTopics} konu okundu</Text>
             </View>
           </View>
-          <ChevronRight size={18} color={Colors.textLight} />
+          <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
 
         {/* Practice Mode */}
@@ -181,7 +184,7 @@ export default function PracticeScreen() {
             activeOpacity={0.7}
             onPress={() => setSelectedCategory('all')}
           >
-            <Shuffle color={selectedCategory === 'all' ? Colors.accent : Colors.textSecondary} size={24} />
+            <Shuffle color={selectedCategory === 'all' ? colors.accent : colors.textSecondary} size={24} />
             <Text style={[styles.modeTitle, selectedCategory === 'all' && styles.modeTitleActive]}>Karışık</Text>
             <Text style={[styles.modeCount, selectedCategory === 'all' && styles.modeCountActive]}>{questions.length} soru</Text>
           </TouchableOpacity>
@@ -202,7 +205,7 @@ export default function PracticeScreen() {
                 activeOpacity={0.7}
                 onPress={() => setSelectedCategory(cat.id)}
               >
-                <Icon color={isSelected ? cat.color : Colors.textSecondary} size={18} />
+                <Icon color={isSelected ? cat.color : colors.textSecondary} size={18} />
                 <Text style={[styles.chipText, isSelected && { color: cat.color }]}>{cat.titleTr}</Text>
                 <Text style={[styles.chipCount, isSelected && { color: cat.color }]}>{catQuestions}</Text>
               </TouchableOpacity>
@@ -212,18 +215,18 @@ export default function PracticeScreen() {
 
         <View style={styles.infoSection}>
           <View style={styles.infoRow}>
-            <Clock color={Colors.textSecondary} size={16} />
+            <Clock color={colors.textSecondary} size={16} />
             <Text style={styles.infoText}>Süre sınırı yok - rahatça çöz</Text>
           </View>
           <View style={styles.infoRow}>
-            <Zap color={Colors.accent} size={16} />
+            <Zap color={colors.accent} size={16} />
             <Text style={styles.infoText}>Her doğru cevap serini artırır</Text>
           </View>
         </View>
 
         <TouchableOpacity style={styles.startButton} activeOpacity={0.8} onPress={handleStart} testID="start-quiz">
-          <LinearGradient colors={[Colors.accent, Colors.accentLight]} style={styles.startGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-            <Play color={Colors.primary} size={22} />
+          <LinearGradient colors={[colors.accent, colors.accentLight]} style={styles.startGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <Play color={colors.primary} size={22} />
             <Text style={styles.startText}>Başla ({questionCount} soru)</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -236,10 +239,10 @@ export default function PracticeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
   },
   content: {
     flex: 1,
@@ -264,7 +267,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 12,
   },
   examCards: {
@@ -282,7 +285,7 @@ const styles = StyleSheet.create({
     gap: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   examCardContent: {
     flex: 1,
@@ -290,18 +293,18 @@ const styles = StyleSheet.create({
   examCardTitle: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 2,
   },
   examCardDesc: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   studyPlanCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
@@ -310,7 +313,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 24,
@@ -334,18 +337,18 @@ const styles = StyleSheet.create({
   studyPlanTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   studyPlanSub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   modeCards: {
     marginBottom: 24,
   },
   modeCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 18,
     flexDirection: 'row',
@@ -355,24 +358,24 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   modeCardActive: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accentSoft + '40',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft + '40',
   },
   modeTitle: {
     flex: 1,
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   modeTitleActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   modeCount: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   modeCountActive: {
-    color: Colors.accent,
+    color: colors.accent,
     fontWeight: '600' as const,
   },
   categoryGrid: {
@@ -384,26 +387,26 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
     gap: 8,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   chipText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   chipCount: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500' as const,
   },
   infoSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     gap: 12,
@@ -416,7 +419,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   startButton: {
     borderRadius: 14,
@@ -432,6 +435,6 @@ const styles = StyleSheet.create({
   startText: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: colors.primary,
   },
 });

@@ -1,11 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check, X, RotateCcw, Star } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Lock, Crown } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePremiumStore } from '@/stores/premiumStore';
 import PaywallScreen from '@/components/PaywallScreen';
@@ -20,11 +20,14 @@ const FREE_CARD_LIMIT = 20;
 
 export default function VocabularyScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
   const { vocabCards, toggleMastered } = useStudy();
   const { isPremium } = usePremiumStore();
   const [filter, setFilter] = useState<FilterType>('all');
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [showPaywall, setShowPaywall] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const filteredCards = vocabCards.filter(card => {
     if (filter === 'learning') return !card.mastered;
@@ -66,7 +69,7 @@ export default function VocabularyScreen() {
         >
           <View style={[styles.cardInner, styles.cardLocked]}>
             <View style={styles.cardFront}>
-              <Lock size={28} color={Colors.locked} />
+              <Lock size={28} color={colors.locked} />
               <Text style={styles.lockedText}>Premium ile Aç</Text>
               <Text style={styles.lockedHint}>Bu karta erişmek için premium'a geç</Text>
             </View>
@@ -89,7 +92,7 @@ export default function VocabularyScreen() {
                 <View style={[styles.levelBadge, { backgroundColor: getLevelColor(item.level) + '20' }]}>
                   <Text style={[styles.levelText, { color: getLevelColor(item.level) }]}>{getLevelLabel(item.level)}</Text>
                 </View>
-                {item.mastered && <Star color={Colors.accent} size={18} fill={Colors.accent} />}
+                {item.mastered && <Star color={colors.accent} size={18} fill={colors.accent} />}
               </View>
               <Text style={styles.wordText}>{item.word}</Text>
               <Text style={styles.flipHint}>Çevirmek için dokun</Text>
@@ -97,6 +100,7 @@ export default function VocabularyScreen() {
           ) : (
             <View style={styles.cardBack}>
               <Text style={styles.meaningText}>{item.meaning}</Text>
+              <div style={{ flex: 1 }} />
               <View style={styles.exampleBox}>
                 <Text style={styles.exampleText}>"{item.example}"</Text>
               </View>
@@ -107,7 +111,7 @@ export default function VocabularyScreen() {
               >
                 {item.mastered ? (
                   <>
-                    <RotateCcw color={Colors.textSecondary} size={16} />
+                    <RotateCcw color={colors.textSecondary} size={16} />
                     <Text style={styles.masterButtonTextInactive}>Tekrar öğren</Text>
                   </>
                 ) : (
@@ -122,16 +126,16 @@ export default function VocabularyScreen() {
         </View>
       </TouchableOpacity>
     );
-  }, [flippedCards, handleFlip, handleToggleMastered, isPremium]);
+  }, [flippedCards, handleFlip, handleToggleMastered, isPremium, colors, styles]);
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>Kelime Kartları</Text>
         <Text style={styles.headerSubtitle}>{masteredCount}/{vocabCards.length} kelime öğrenildi</Text>
 
         <View style={styles.progressBarContainer}>
-          <View style={[styles.progressBarFill, { width: `${(masteredCount / vocabCards.length) * 100}%` }]} />
+          <View style={[styles.progressBarFill, { width: `${(masteredCount / (vocabCards.length || 1)) * 100}%`, backgroundColor: colors.accent }]} />
         </View>
       </LinearGradient>
 
@@ -153,7 +157,7 @@ export default function VocabularyScreen() {
       {/* Premium Banner for free users */}
       {!isPremium && vocabCards.length > FREE_CARD_LIMIT && (
         <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.7} onPress={() => setShowPaywall(true)}>
-          <Crown size={16} color={Colors.accent} />
+          <Crown size={16} color={colors.accent} />
           <Text style={styles.premiumBannerText}>
             İlk {FREE_CARD_LIMIT} kart ücretsiz · Premium ile tümüne eriş
           </Text>
@@ -187,7 +191,7 @@ function getLevelColor(level: string): string {
     case 'beginner': return '#22C55E';
     case 'intermediate': return '#F59E0B';
     case 'advanced': return '#EF4444';
-    default: return Colors.textSecondary;
+    default: return '#737373';
   }
 }
 
@@ -200,10 +204,10 @@ function getLevelLabel(level: string): string {
   }
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -217,7 +221,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
     marginBottom: 12,
   },
   progressBarContainer: {
@@ -228,7 +232,6 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: Colors.accent,
     borderRadius: 3,
   },
   filterRow: {
@@ -241,18 +244,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   filterChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   filterTextActive: {
     color: '#FFFFFF',
@@ -265,31 +268,29 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cardInner: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     borderLeftWidth: 4,
-    borderLeftColor: Colors.primaryLight,
-    shadowColor: Colors.cardShadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 2,
+    borderLeftColor: colors.primaryLight,
   },
   cardMastered: {
-    borderLeftColor: Colors.accent,
+    borderLeftColor: colors.accent,
   },
   cardFront: {
     alignItems: 'center',
-    minHeight: 100,
+    minHeight: 120,
     justifyContent: 'center',
+  },
+  cardBack: {
+    minHeight: 120,
   },
   cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   levelBadge: {
     paddingHorizontal: 10,
@@ -301,33 +302,30 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   wordText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 8,
   },
   flipHint: {
     fontSize: 12,
-    color: Colors.textLight,
-  },
-  cardBack: {
-    minHeight: 100,
+    color: colors.textLight,
   },
   meaningText: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 12,
   },
   exampleBox: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderRadius: 10,
     padding: 12,
     marginBottom: 14,
   },
   exampleText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontStyle: 'italic' as const,
     lineHeight: 20,
   },
@@ -336,12 +334,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: Colors.success,
+    backgroundColor: colors.success,
     paddingVertical: 10,
     borderRadius: 10,
   },
   masterButtonActive: {
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
   },
   masterButtonText: {
     color: '#FFFFFF',
@@ -349,23 +347,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   masterButtonTextInactive: {
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '600' as const,
     fontSize: 14,
   },
   cardLocked: {
-    borderLeftColor: Colors.locked,
-    backgroundColor: Colors.surfaceAlt,
+    borderLeftColor: colors.locked,
+    backgroundColor: colors.surfaceAlt,
   },
   lockedText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.locked,
+    color: colors.locked,
     marginTop: 8,
   },
   lockedHint: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: colors.textLight,
     marginTop: 4,
   },
   premiumBanner: {
@@ -377,15 +375,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: Colors.accent + '12',
+    backgroundColor: colors.accent + '12',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.accent + '30',
+    borderColor: colors.accent + '30',
   },
   premiumBannerText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   emptyState: {
     flex: 1,
@@ -399,7 +397,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center' as const,
   },
 });

@@ -1,4 +1,6 @@
-const Colors = {
+import { ThemeMode } from '@/stores/themeStore';
+
+const LightColors = {
   primary: '#1B2541',
   primaryLight: '#2A3A5C',
   primaryDark: '#111A30',
@@ -21,4 +23,33 @@ const Colors = {
   premium: '#D4A843',
 };
 
+const DarkColors: typeof LightColors = {
+  primary: '#0F1729',
+  primaryLight: '#1A2744',
+  primaryDark: '#080E1A',
+  accent: '#E8C76B',
+  accentLight: '#F5D98A',
+  accentSoft: '#3D3420',
+  background: '#0F1729',
+  surface: '#1A2744',
+  surfaceAlt: '#1E2E52',
+  text: '#E8ECF4',
+  textSecondary: '#8B9AB8',
+  textLight: '#5A6A85',
+  success: '#30D158',
+  error: '#FF453A',
+  warning: '#FF9F0A',
+  border: '#2A3A5C',
+  cardShadow: 'rgba(0, 0, 0, 0.3)',
+  examAccent: '#818CF8',
+  locked: '#4A5568',
+  premium: '#E8C76B',
+};
+
+export function getColors(mode: ThemeMode): typeof LightColors {
+  return mode === 'dark' ? DarkColors : LightColors;
+}
+
+// Default export for backward compatibility — light theme
+const Colors = LightColors;
 export default Colors;

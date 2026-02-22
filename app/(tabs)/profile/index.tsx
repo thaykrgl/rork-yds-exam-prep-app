@@ -2,23 +2,26 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Flame, Target, TrendingUp, RotateCcw, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Library } from 'lucide-react-native';
+import { Award, Flame, Target, TrendingUp, RotateCcw, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Library, Moon, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import Colors from '@/constants/colors';
+import { useColors } from '@/hooks/useColors';
+import { useThemeStore } from '@/stores/themeStore';
 import { useStudy } from '@/providers/StudyProvider';
 import { studyCategories } from '@/mocks/questions';
 import { formatDuration } from '@/utils/examUtils';
 import { useAchievementStore } from '@/stores/achievementStore';
+import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
+import { useGrammarStore } from '@/stores/grammarStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { allBadges } from '@/data/badges';
 import BadgeCard from '@/components/BadgeCard';
 import XPBar from '@/components/XPBar';
-import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
-import { useGrammarStore } from '@/stores/grammarStore';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
+  const { mode, toggleTheme } = useThemeStore();
   const { stats, vocabCards, resetStats } = useStudy();
 
   const accuracy = stats.totalAnswered > 0 ? Math.round((stats.correctAnswers / stats.totalAnswered) * 100) : 0;
@@ -27,14 +30,16 @@ export default function ProfileScreen() {
   const grammarReadCount = useGrammarStore(s => s.getReadCount());
   const grammarTotalTopics = useGrammarStore(s => s.getTotalTopics());
 
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const handleReset = () => {
     Alert.alert(
       'İstatistikleri Sıfırla',
-      'Tüm istatistiklerini sıfırlamak istediğinden emin misin?',
+      'Tüm ilerlemen, vokal kartların ve istatistiklerin kalıcı olarak silinecek. Emin misin?',
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: 'Vazgeç', style: 'cancel' },
         { text: 'Sıfırla', style: 'destructive', onPress: resetStats },
-      ],
+      ]
     );
   };
 
@@ -48,9 +53,18 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.headerTopActions}>
+          <TouchableOpacity 
+            style={styles.themeToggle} 
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            {mode === 'dark' ? <Sun size={20} color="#FFFFFF" /> : <Moon size={20} color="#FFFFFF" />}
+          </TouchableOpacity>
+        </View>
         <View style={styles.avatarContainer}>
-          <LinearGradient colors={[Colors.accent, Colors.accentLight]} style={styles.avatar}>
+          <LinearGradient colors={[colors.accent, colors.accentLight]} style={styles.avatar}>
             <Text style={styles.avatarText}>YDS</Text>
           </LinearGradient>
         </View>
@@ -60,44 +74,46 @@ export default function ProfileScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentInner} showsVerticalScrollIndicator={false}>
+        {/* Big stats row */}
         <View style={styles.bigStatsRow}>
           <View style={styles.bigStat}>
             <View style={[styles.bigStatIcon, { backgroundColor: '#FFF7ED' }]}>
               <Flame color="#F97316" size={24} />
             </View>
-            <Text style={styles.bigStatValue}>{stats.bestStreak}</Text>
-            <Text style={styles.bigStatLabel}>En İyi Seri</Text>
+            <Text style={styles.bigStatValue}>{stats.streak}</Text>
+            <Text style={styles.bigStatLabel}>Günlük Seri</Text>
           </View>
           <View style={styles.bigStat}>
             <View style={[styles.bigStatIcon, { backgroundColor: '#F0FDF4' }]}>
-              <TrendingUp color="#22C55E" size={24} />
+              <Target color="#22C55E" size={24} />
             </View>
             <Text style={styles.bigStatValue}>%{accuracy}</Text>
-            <Text style={styles.bigStatLabel}>Başarı Oranı</Text>
+            <Text style={styles.bigStatLabel}>Doğruluk Oranı</Text>
           </View>
           <View style={styles.bigStat}>
             <View style={[styles.bigStatIcon, { backgroundColor: '#EFF6FF' }]}>
-              <Award color="#3B82F6" size={24} />
+              <Clock color="#3B82F6" size={24} />
             </View>
-            <Text style={styles.bigStatValue}>{stats.totalAnswered}</Text>
-            <Text style={styles.bigStatLabel}>Toplam Soru</Text>
+            <Text style={styles.bigStatValue}>{Math.round(stats.totalStudyTimeSeconds / 60)}</Text>
+            <Text style={styles.bigStatLabel}>Dk. Çalışma</Text>
           </View>
         </View>
 
+        {/* Vocab card */}
         <View style={styles.vocabCard}>
-          <BookOpen color={Colors.accent} size={20} />
+          <BookOpen color={colors.accent} size={20} />
           <View style={styles.vocabInfo}>
             <Text style={styles.vocabTitle}>Kelime Bilgisi</Text>
             <Text style={styles.vocabSub}>{masteredWords}/{vocabCards.length} kelime öğrenildi</Text>
           </View>
           <View style={styles.vocabBadge}>
-            <Text style={styles.vocabBadgeText}>%{Math.round((masteredWords / vocabCards.length) * 100)}</Text>
+            <Text style={styles.vocabBadgeText}>%{Math.round((masteredWords / (vocabCards.length || 1)) * 100)}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Kategori Detayları</Text>
-
-        {categoryData.map(cat => (
+        {/* Category details */}
+        <Text style={styles.sectionTitle}>Kategori Bazlı Performans</Text>
+        {categoryData.filter(c => c.answered > 0).map(cat => (
           <View key={cat.id} style={styles.categoryRow}>
             <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
             <View style={styles.categoryRowInfo}>
@@ -105,22 +121,22 @@ export default function ProfileScreen() {
               <Text style={styles.categoryRowSub}>{cat.answered} çözüldü</Text>
             </View>
             <View style={styles.categoryRowRight}>
-              <Text style={[styles.categoryAccuracy, { color: cat.accuracy >= 70 ? Colors.success : cat.accuracy >= 40 ? Colors.warning : Colors.error }]}>
+              <Text style={[styles.categoryAccuracy, { color: cat.accuracy >= 70 ? colors.success : cat.accuracy >= 40 ? colors.warning : colors.error }]}>
                 %{cat.accuracy}
               </Text>
             </View>
           </View>
         ))}
 
-        {/* Analytics Button */}
+        {/* Links */}
         <TouchableOpacity
           style={styles.analyticsButton}
           activeOpacity={0.7}
           onPress={() => router.push('/analytics' as any)}
         >
-          <BarChart3 size={20} color={Colors.examAccent} />
+          <BarChart3 size={20} color={colors.examAccent} />
           <Text style={styles.analyticsText}>Detaylı Analiz</Text>
-          <ChevronRight size={18} color={Colors.textLight} />
+          <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
 
         {/* Personal Records */}
@@ -133,7 +149,7 @@ export default function ProfileScreen() {
           <Text style={styles.analyticsText}>
             Kişisel Rekorlar{topRecord ? ` · ${topRecord.displayValue}` : ''}
           </Text>
-          <ChevronRight size={18} color={Colors.textLight} />
+          <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
 
         {/* Grammar Library */}
@@ -146,23 +162,23 @@ export default function ProfileScreen() {
           <Text style={styles.analyticsText}>
             Gramer Kütüphanesi · {grammarReadCount}/{grammarTotalTopics}
           </Text>
-          <ChevronRight size={18} color={Colors.textLight} />
+          <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
 
         {/* Badges */}
         <Text style={styles.sectionTitle}>Rozetler</Text>
         <View style={styles.badgeGrid}>
           {allBadges.map(badge => (
-            <BadgeCard
-              key={badge.id}
-              badge={badge}
-              unlocked={useAchievementStore.getState().isUnlocked(badge.id)}
+            <BadgeCard 
+              key={badge.id} 
+              badge={badge} 
+              unlocked={useAchievementStore.getState().isUnlocked(badge.id)} 
             />
           ))}
         </View>
 
         {/* Notification Settings */}
-        <Text style={styles.sectionTitle}>Bildirimler</Text>
+        <Text style={styles.sectionTitle}>Bildirim Ayarları</Text>
         <View style={styles.notifCard}>
           <TouchableOpacity
             style={styles.notifRow}
@@ -172,9 +188,9 @@ export default function ProfileScreen() {
             }}
           >
             {useNotificationStore.getState().preferences.dailyReminder ? (
-              <Bell size={18} color={Colors.accent} />
+              <Bell size={18} color={colors.accent} />
             ) : (
-              <BellOff size={18} color={Colors.textLight} />
+              <BellOff size={18} color={colors.textLight} />
             )}
             <View style={styles.notifInfo}>
               <Text style={styles.notifTitle}>Günlük Hatırlatıcı</Text>
@@ -184,6 +200,24 @@ export default function ProfileScreen() {
               <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.dailyReminder && styles.notifToggleDotActive]} />
             </View>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.notifRow}
+            onPress={() => {
+              const store = useNotificationStore.getState();
+              store.updatePreferences({ streakReminder: !store.preferences.streakReminder });
+            }}
+          >
+            <Flame size={18} color={useNotificationStore.getState().preferences.streakReminder ? colors.error : colors.textLight} />
+            <View style={styles.notifInfo}>
+              <Text style={styles.notifTitle}>Seri Hatırlatıcı</Text>
+              <Text style={styles.notifSub}>Serin kırılmadan önce uyarıl</Text>
+            </View>
+            <View style={[styles.notifToggle, useNotificationStore.getState().preferences.streakReminder && styles.notifToggleActive]}>
+              <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.streakReminder && styles.notifToggleDotActive]} />
+            </View>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.notifRow}
             onPress={() => {
@@ -191,10 +225,10 @@ export default function ProfileScreen() {
               store.updatePreferences({ milestoneNotifications: !store.preferences.milestoneNotifications });
             }}
           >
-            <Trophy size={18} color={useNotificationStore.getState().preferences.milestoneNotifications ? Colors.accent : Colors.textLight} />
+            <Trophy size={18} color={useNotificationStore.getState().preferences.milestoneNotifications ? colors.accent : colors.textLight} />
             <View style={styles.notifInfo}>
               <Text style={styles.notifTitle}>Başarı Bildirimleri</Text>
-              <Text style={styles.notifSub}>Rozet ve milestone bildirimleri</Text>
+              <Text style={styles.notifSub}>Rozet ve rekor bildirimleri</Text>
             </View>
             <View style={[styles.notifToggle, useNotificationStore.getState().preferences.milestoneNotifications && styles.notifToggleActive]}>
               <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.milestoneNotifications && styles.notifToggleDotActive]} />
@@ -203,62 +237,74 @@ export default function ProfileScreen() {
         </View>
 
         {/* Exam History */}
-        {stats.examHistory.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Sınav Geçmişi</Text>
-            {stats.examHistory.slice(-5).reverse().map((exam) => {
-              const pct = Math.round((exam.score / exam.totalQuestions) * 100);
-              const modeLabel = exam.config.mode === 'full' ? 'Tam Simülasyon' : 'Mini Sınav';
-              const date = new Date(exam.date);
-              const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
-              return (
-                <TouchableOpacity
-                  key={exam.id}
-                  style={styles.examHistoryCard}
-                  activeOpacity={0.7}
-                  onPress={() => router.push({ pathname: '/exam-result' as any, params: { examResultId: exam.id } })}
-                >
-                  <View style={styles.examHistoryLeft}>
-                    <View style={[styles.examHistoryIcon, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
-                      <Trophy size={18} color={pct >= 70 ? Colors.success : Colors.warning} />
-                    </View>
-                    <View style={styles.examHistoryInfo}>
-                      <Text style={styles.examHistoryTitle}>{modeLabel}</Text>
-                      <Text style={styles.examHistorySub}>{dateStr} · {exam.score}/{exam.totalQuestions} · {formatDuration(exam.timeSpentSeconds)}</Text>
-                    </View>
+        <Text style={styles.sectionTitle}>Sınav Geçmişi</Text>
+        {stats.examHistory.length > 0 ? (
+          stats.examHistory.slice().reverse().map(exam => {
+            const pct = Math.round((exam.score / exam.totalQuestions) * 100);
+            const modeLabel = exam.config?.mode === 'full' ? 'Tam Sınav' : 'Mini Sınav';
+            return (
+              <TouchableOpacity
+                key={exam.id}
+                style={styles.examHistoryCard}
+                activeOpacity={0.7}
+                onPress={() => router.push({ pathname: '/exam-result' as any, params: { examResultId: exam.id } })}
+              >
+                <View style={styles.examHistoryLeft}>
+                  <View style={[styles.examHistoryIcon, { backgroundColor: pct >= 70 ? colors.success + '15' : colors.warning + '15' }]}>
+                    <Trophy size={18} color={pct >= 70 ? colors.success : colors.warning} />
+                  </View>
+                  <View style={styles.examHistoryInfo}>
+                    <Text style={styles.examHistoryTitle}>{modeLabel}</Text>
+                    <Text style={styles.examHistorySub}>{new Date(exam.date).toLocaleDateString('tr-TR')} · {exam.score}/{exam.totalQuestions}</Text>
                   </View>
                   <View style={styles.examHistoryRight}>
-                    <View style={[styles.examHistoryBadge, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
-                      <Text style={[styles.examHistoryPercent, { color: pct >= 70 ? Colors.success : Colors.warning }]}>%{pct}</Text>
+                    <View style={[styles.examHistoryBadge, { backgroundColor: pct >= 70 ? colors.success + '15' : colors.warning + '15' }]}>
+                      <Text style={[styles.examHistoryPercent, { color: pct >= 70 ? colors.success : colors.warning }]}>%{pct}</Text>
                     </View>
-                    <ChevronRight size={16} color={Colors.textLight} />
+                    <ChevronRight size={16} color={colors.textLight} />
                   </View>
-                </TouchableOpacity>
-              );
-            })}
-          </>
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        ) : (
+          <Text style={{ color: colors.textLight, fontSize: 13, textAlign: 'center', marginVertical: 10 }}>Henüz sınav geçmişi yok.</Text>
         )}
 
         <TouchableOpacity style={styles.resetButton} activeOpacity={0.7} onPress={handleReset} testID="reset-stats">
-          <RotateCcw color={Colors.error} size={18} />
+          <RotateCcw color={colors.error} size={18} />
           <Text style={styles.resetText}>İstatistikleri Sıfırla</Text>
         </TouchableOpacity>
 
-        <View style={{ height: 30 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,
     alignItems: 'center',
+  },
+  headerTopActions: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 4,
+  },
+  themeToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarContainer: {
     marginBottom: 12,
@@ -273,7 +319,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 20,
     fontWeight: '800' as const,
-    color: Colors.primary,
+    color: colors.primary,
   },
   headerTitle: {
     fontSize: 22,
@@ -283,7 +329,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
   },
   content: {
     flex: 1,
@@ -298,7 +344,7 @@ const styles = StyleSheet.create({
   },
   bigStat: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     alignItems: 'center',
@@ -314,18 +360,18 @@ const styles = StyleSheet.create({
   bigStatValue: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   bigStatLabel: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500' as const,
     textAlign: 'center' as const,
   },
   vocabCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 24,
@@ -337,15 +383,15 @@ const styles = StyleSheet.create({
   vocabTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   vocabSub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   vocabBadge: {
-    backgroundColor: Colors.accentSoft,
+    backgroundColor: colors.accentSoft,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -353,18 +399,18 @@ const styles = StyleSheet.create({
   vocabBadgeText: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.accent,
+    color: colors.accent,
   },
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 14,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -381,11 +427,11 @@ const styles = StyleSheet.create({
   categoryRowTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   categoryRowSub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   categoryRowRight: {
@@ -398,19 +444,19 @@ const styles = StyleSheet.create({
   analyticsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.examAccent + '10',
+    backgroundColor: colors.examAccent + '10',
     borderRadius: 14,
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 10,
     gap: 12,
     borderWidth: 1,
-    borderColor: Colors.examAccent + '25',
+    borderColor: colors.examAccent + '25',
   },
   analyticsText: {
     flex: 1,
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   badgeGrid: {
     flexDirection: 'row',
@@ -420,9 +466,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   notifCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
-    padding: 4,
+    paddingVertical: 4,
     marginBottom: 24,
   },
   notifRow: {
@@ -437,23 +483,23 @@ const styles = StyleSheet.create({
   notifTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   notifSub: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   notifToggle: {
     width: 44,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     justifyContent: 'center',
     paddingHorizontal: 2,
   },
   notifToggleActive: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
   },
   notifToggleDot: {
     width: 20,
@@ -468,7 +514,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -492,11 +538,11 @@ const styles = StyleSheet.create({
   examHistoryTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   examHistorySub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   examHistoryRight: {
@@ -522,12 +568,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.error + '30',
-    backgroundColor: Colors.error + '08',
+    borderColor: colors.error + '30',
+    backgroundColor: colors.error + '08',
   },
   resetText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.error,
+    color: colors.error,
   },
 });

@@ -1,31 +1,23 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, Newspaper, ChevronRight, Trophy, Clock, RefreshCw, Calendar, CheckCircle } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, Newspaper, ChevronRight, Trophy, Clock, RefreshCw, Calendar, CheckCircle, Moon, Sun } from 'lucide-react-native';
+import { useColors } from '@/hooks/useColors';
+import { useThemeStore } from '@/stores/themeStore';
 import { useStudy } from '@/providers/StudyProvider';
 import { studyCategories } from '@/mocks/questions';
 import { useSpacedRepetitionStore } from '@/stores/spacedRepetitionStore';
 import { useStudyPlanStore } from '@/stores/studyPlanStore';
-import { QuestionCategory } from '@/types';
 import { formatDuration } from '@/utils/examUtils';
-
-const { width } = Dimensions.get('window');
-
-const categoryIcons: Record<string, React.ComponentType<{ color: string; size: number }>> = {
-  BookOpen,
-  PenTool,
-  FileText,
-  Languages,
-  PuzzleIcon: Puzzle,
-  Newspaper,
-};
+import { QuestionCategory } from '@/types';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colors = useColors();
+  const { mode, toggleTheme } = useThemeStore();
   const { stats } = useStudy();
   const dueCount = useSpacedRepetitionStore((s) => s.getDueCount());
   const { activePlan, getTodaysTasks, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
@@ -34,6 +26,8 @@ export default function HomeScreen() {
   const planDef = getActivePlanDef();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const dailyPercent = Math.min(stats.dailyProgress / stats.dailyGoal, 1);
   const accuracy = stats.totalAnswered > 0 ? Math.round((stats.correctAnswers / stats.totalAnswered) * 100) : 0;
@@ -62,18 +56,29 @@ export default function HomeScreen() {
     outputRange: ['0%', '100%'],
   });
 
+  const lastExam = stats.examHistory.length > 0 ? stats.examHistory[stats.examHistory.length - 1] : null;
+
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Animated.View style={{ opacity: fadeAnim }}>
-          <Text style={styles.greeting}>Merhaba!</Text>
-          <Text style={styles.subtitle}>YDS sınavına hazır mısın?</Text>
-        </Animated.View>
+      <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.headerTopRow}>
+          <Animated.View style={{ opacity: fadeAnim }}>
+            <Text style={styles.greeting}>Merhaba!</Text>
+            <Text style={styles.subtitle}>YDS sınavına hazır mısın?</Text>
+          </Animated.View>
+          <TouchableOpacity 
+            style={styles.themeToggle} 
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            {mode === 'dark' ? <Sun size={20} color="#FFFFFF" /> : <Moon size={20} color="#FFFFFF" />}
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.dailyCard}>
           <View style={styles.dailyHeader}>
             <View style={styles.dailyLeft}>
-              <Target color={Colors.accent} size={20} />
+              <Target color={colors.accent} size={20} />
               <Text style={styles.dailyTitle}>Günlük Hedef</Text>
             </View>
             <Text style={styles.dailyCount}>
@@ -81,7 +86,7 @@ export default function HomeScreen() {
             </Text>
           </View>
           <View style={styles.progressBar}>
-            <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
+            <Animated.View style={[styles.progressFill, { width: progressWidth, backgroundColor: colors.accent }]} />
           </View>
           <Text style={styles.dailyHint}>
             {dailyPercent >= 1 ? 'Harika! Günlük hedefini tamamladın! 🎉' : `${stats.dailyGoal - stats.dailyProgress} soru daha çöz`}
@@ -91,19 +96,19 @@ export default function HomeScreen() {
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollInner} showsVerticalScrollIndicator={false}>
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: '#FFF7ED' }]}>
+          <View style={[styles.statCard, { backgroundColor: mode === 'dark' ? '#3D2010' : '#FFF7ED' }]}>
             <Flame color="#F97316" size={22} />
             <Text style={styles.statValue}>{stats.streak}</Text>
             <Text style={styles.statLabel}>Seri</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: '#F0FDF4' }]}>
+          <View style={[styles.statCard, { backgroundColor: mode === 'dark' ? '#103020' : '#F0FDF4' }]}>
             <TrendingUp color="#22C55E" size={22} />
             <Text style={styles.statValue}>%{accuracy}</Text>
             <Text style={styles.statLabel}>Başarı</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: '#EFF6FF' }]}>
+          <View style={[styles.statCard, { backgroundColor: mode === 'dark' ? '#102040' : '#EFF6FF' }]}>
             <BookOpen color="#3B82F6" size={22} />
-            <Text style={styles.statValue}>{stats.totalAnswered}</Text>
+            <Text style={stats.totalAnswered > 0 ? styles.statValue : styles.statLabel}>{stats.totalAnswered}</Text>
             <Text style={styles.statLabel}>Toplam</Text>
           </View>
         </View>
@@ -124,7 +129,7 @@ export default function HomeScreen() {
                 <Text style={styles.reviewCardSub}>{dueCount} soru tekrar bekliyor</Text>
               </View>
             </View>
-            <ChevronRight size={18} color={Colors.textLight} />
+            <ChevronRight size={18} color={colors.textLight} />
           </TouchableOpacity>
         )}
 
@@ -136,14 +141,14 @@ export default function HomeScreen() {
             onPress={() => router.push({ pathname: '/study-plan-detail' as any, params: { planId: activePlan.planId } })}
           >
             <View style={styles.planCardHeader}>
-              <Calendar size={16} color={Colors.examAccent} />
+              <Calendar size={16} color={colors.examAccent} />
               <Text style={styles.planCardLabel}>{planDef?.title}</Text>
               <Text style={styles.planCardPercent}>%{planProgress.percentage}</Text>
             </View>
             {todaysTasks.slice(0, 3).map(task => (
               <View key={task.id} style={styles.planTaskRow}>
                 {task.completed ? (
-                  <CheckCircle size={14} color={Colors.success} />
+                  <CheckCircle size={14} color={colors.success} />
                 ) : (
                   <View style={styles.planTaskCircle} />
                 )}
@@ -162,65 +167,78 @@ export default function HomeScreen() {
           onPress={() => router.push('/exam' as any)}
         >
           <LinearGradient
-            colors={[Colors.examAccent, Colors.examAccent + 'CC']}
+            colors={[colors.examAccent, colors.examAccent + 'CC']}
             style={styles.examCardGradient}
           >
             <View style={styles.examCardLeft}>
-              <Trophy size={24} color="#FFFFFF" />
+              <Trophy color="#FFFFFF" size={32} />
               <View style={styles.examCardInfo}>
-                <Text style={styles.examCardTitle}>Deneme Sınavı</Text>
-                <Text style={styles.examCardSub}>YDS formatında sınav simülasyonu</Text>
+                <Text style={styles.examCardTitle}>Simülasyon Sınavı</Text>
+                <Text style={styles.examCardSub}>Gerçek sınav deneyimi yaşa</Text>
               </View>
             </View>
-            <ChevronRight size={20} color="#FFFFFF" />
+            <ChevronRight color="#FFFFFF" size={24} />
           </LinearGradient>
         </TouchableOpacity>
 
         {/* Last Exam Result */}
-        {stats.examHistory.length > 0 && (() => {
-          const lastExam = stats.examHistory[stats.examHistory.length - 1];
-          const pct = Math.round((lastExam.score / lastExam.totalQuestions) * 100);
-          return (
+        {lastExam && (
+          <>
+            <Text style={styles.sectionTitle}>En Son Performans</Text>
             <TouchableOpacity
               style={styles.lastExamCard}
               activeOpacity={0.7}
               onPress={() => router.push({ pathname: '/exam-result' as any, params: { examResultId: lastExam.id } })}
             >
               <View style={styles.lastExamLeft}>
-                <View style={[styles.lastExamIcon, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
-                  <Target size={20} color={pct >= 70 ? Colors.success : Colors.warning} />
-                </View>
-                <View>
-                  <Text style={styles.lastExamTitle}>Son Sınav Sonucu</Text>
-                  <Text style={styles.lastExamSub}>
-                    {lastExam.score}/{lastExam.totalQuestions} doğru · {formatDuration(lastExam.timeSpentSeconds)}
-                  </Text>
-                </View>
+                {(() => {
+                  const pct = Math.round((lastExam.score / lastExam.totalQuestions) * 100);
+                  return (
+                    <>
+                      <View style={[styles.lastExamIcon, { backgroundColor: pct >= 70 ? colors.success + '15' : colors.warning + '15' }]}>
+                        <Target size={20} color={pct >= 70 ? colors.success : colors.warning} />
+                      </View>
+                      <View>
+                        <Text style={styles.lastExamTitle}>Son Sınav Sonucu</Text>
+                        <Text style={styles.lastExamSub}>
+                          {lastExam.score}/{lastExam.totalQuestions} doğru · {formatDuration(lastExam.timeSpentSeconds)}
+                        </Text>
+                      </View>
+                    </>
+                  );
+                })()}
               </View>
-              <View style={[styles.lastExamBadge, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
-                <Text style={[styles.lastExamPercent, { color: pct >= 70 ? Colors.success : Colors.warning }]}>%{pct}</Text>
-              </View>
+              {(() => {
+                const pct = Math.round((lastExam.score / lastExam.totalQuestions) * 100);
+                return (
+                  <View style={[styles.lastExamBadge, { backgroundColor: pct >= 70 ? colors.success + '15' : colors.warning + '15' }]}>
+                    <Text style={[styles.lastExamPercent, { color: pct >= 70 ? colors.success : colors.warning }]}>%{pct}</Text>
+                  </View>
+                );
+              })()}
             </TouchableOpacity>
-          );
-        })()}
+          </>
+        )}
 
-        <Text style={styles.sectionTitle}>Kategoriler</Text>
-
-        {studyCategories.map((cat, index) => {
-          const Icon = categoryIcons[cat.icon] || BookOpen;
+        {/* Question Categories */}
+        <Text style={styles.sectionTitle}>Soru Tipleri</Text>
+        {studyCategories.map((cat) => {
           const catStat = stats.categoryStats[cat.id];
           const catAccuracy = catStat.answered > 0 ? Math.round((catStat.correct / catStat.answered) * 100) : 0;
-
           return (
             <TouchableOpacity
               key={cat.id}
               style={styles.categoryCard}
               activeOpacity={0.7}
               onPress={() => handleCategoryPress(cat.id)}
-              testID={`category-${cat.id}`}
             >
-              <View style={[styles.categoryIcon, { backgroundColor: cat.color + '18' }]}>
-                <Icon color={cat.color} size={24} />
+              <View style={[styles.categoryIcon, { backgroundColor: cat.color + '15' }]}>
+                {cat.id === 'vocabulary' && <BookOpen color={cat.color} size={24} />}
+                {cat.id === 'grammar' && <PenTool color={cat.color} size={24} />}
+                {cat.id === 'reading' && <FileText color={cat.color} size={24} />}
+                {cat.id === 'translation' && <Languages color={cat.color} size={24} />}
+                {cat.id === 'cloze' && <Puzzle color={cat.color} size={24} />}
+                {cat.id === 'paragraph' && <Newspaper color={cat.color} size={24} />}
               </View>
               <View style={styles.categoryInfo}>
                 <Text style={styles.categoryTitle}>{cat.titleTr}</Text>
@@ -228,25 +246,38 @@ export default function HomeScreen() {
                   {catStat.answered > 0 ? `${catStat.answered} çözüldü · %${catAccuracy} doğru` : `${cat.questionCount} soru`}
                 </Text>
               </View>
-              <ChevronRight color={Colors.textLight} size={20} />
+              <ChevronRight color={colors.textLight} size={20} />
             </TouchableOpacity>
           );
         })}
-
-        <View style={{ height: 30 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingBottom: 24,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  themeToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   greeting: {
     fontSize: 28,
@@ -256,7 +287,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: Colors.accentSoft,
+    color: colors.accentSoft,
     marginBottom: 20,
   },
   dailyCard: {
@@ -281,7 +312,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   dailyCount: {
-    color: Colors.accent,
+    color: colors.accent,
     fontSize: 16,
     fontWeight: '700' as const,
   },
@@ -293,7 +324,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.accent,
     borderRadius: 4,
   },
   dailyHint: {
@@ -323,31 +353,26 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   statLabel: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500' as const,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 14,
   },
   categoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
-    shadowColor: Colors.cardShadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 2,
   },
   categoryIcon: {
     width: 48,
@@ -363,12 +388,12 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 3,
   },
   categorySubtitle: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   reviewCard: {
     flexDirection: 'row',
@@ -397,7 +422,7 @@ const styles = StyleSheet.create({
   reviewCardTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   reviewCardSub: {
     fontSize: 12,
@@ -406,7 +431,7 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
   },
   planCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
@@ -421,12 +446,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   planCardPercent: {
     fontSize: 13,
     fontWeight: '700' as const,
-    color: Colors.examAccent,
+    color: colors.examAccent,
   },
   planTaskRow: {
     flexDirection: 'row',
@@ -438,15 +463,15 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: Colors.textLight,
+    borderColor: colors.textLight,
   },
   planTaskText: {
     fontSize: 13,
-    color: Colors.text,
+    color: colors.text,
     flex: 1,
   },
   planTaskDone: {
-    color: Colors.textLight,
+    color: colors.textLight,
     textDecorationLine: 'line-through' as const,
   },
   examCard: {
@@ -482,7 +507,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginBottom: 20,
@@ -503,11 +528,11 @@ const styles = StyleSheet.create({
   lastExamTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: colors.text,
   },
   lastExamSub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   lastExamBadge: {

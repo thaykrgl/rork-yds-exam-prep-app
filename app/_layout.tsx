@@ -7,7 +7,11 @@ import { StudyProvider } from "@/providers/StudyProvider";
 import { usePremiumStore } from "@/stores/premiumStore";
 import { useAnalyticsStore } from "@/stores/analyticsStore";
 import { useAchievementStore } from "@/stores/achievementStore";
+import { useThemeStore } from "@/stores/themeStore";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { useColors } from "@/hooks/useColors";
 import BadgeUnlockModal from "@/components/BadgeUnlockModal";
+import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -23,6 +27,7 @@ function PremiumDailyReset() {
 function AnalyticsSessionTracker() {
   useEffect(() => {
     useAnalyticsStore.getState().startSession();
+    useNotificationStore.getState().syncNotifications();
     return () => {
       useAnalyticsStore.getState().endSession();
     };
@@ -46,8 +51,14 @@ function BadgeToast() {
 }
 
 function RootLayoutNav() {
+  const colors = useColors();
   return (
-    <Stack screenOptions={{ headerBackTitle: "Geri" }}>
+    <Stack screenOptions={{ 
+      headerBackTitle: "Geri",
+      headerStyle: { backgroundColor: colors.primary },
+      headerTintColor: colors.accent,
+      contentStyle: { backgroundColor: colors.background }
+    }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="quiz" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="exam" options={{ presentation: "modal", headerShown: false }} />
@@ -65,14 +76,18 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const themeMode = useThemeStore((s) => s.mode);
+  const colors = useColors();
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
         <StudyProvider>
+          <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
           <PremiumDailyReset />
           <AnalyticsSessionTracker />
           <RootLayoutNav />
