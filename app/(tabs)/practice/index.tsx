@@ -1,13 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Play, BookOpen, PenTool, FileText, Languages, Puzzle, Shuffle, Clock, Zap } from 'lucide-react-native';
+import { Play, BookOpen, PenTool, FileText, Languages, Puzzle, Shuffle, Clock, Zap, Timer, Newspaper, Bookmark, Calendar, ChevronRight, Library } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { studyCategories, questions } from '@/mocks/questions';
 import { useStudy } from '@/providers/StudyProvider';
-import { QuestionCategory } from '@/types';
+import { usePremiumStore } from '@/stores/premiumStore';
+import { useBookmarkStore } from '@/stores/bookmarkStore';
+import { useStudyPlanStore } from '@/stores/studyPlanStore';
+import { useGrammarStore } from '@/stores/grammarStore';
+import { QuestionCategory, ExamConfig } from '@/types';
+import { getExamTimeLimitMinutes } from '@/utils/examUtils';
+import PaywallScreen from '@/components/PaywallScreen';
 
 const categoryIcons: Record<string, React.ComponentType<{ color: string; size: number }>> = {
   BookOpen,
@@ -15,13 +21,19 @@ const categoryIcons: Record<string, React.ComponentType<{ color: string; size: n
   FileText,
   Languages,
   PuzzleIcon: Puzzle,
+  Newspaper,
 };
 
 export default function PracticeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { stats } = useStudy();
+  const bookmarkCount = useBookmarkStore((s) => s.getBookmarkCount());
+  const { activePlan, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
+  const grammarReadCount = useGrammarStore(s => s.getReadCount());
+  const grammarTotalTopics = useGrammarStore(s => s.getTotalTopics());
   const [selectedCategory, setSelectedCategory] = useState<QuestionCategory | 'all'>('all');
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const questionCount = useMemo(() => {
     if (selectedCategory === 'all') return questions.length;
@@ -32,6 +44,30 @@ export default function PracticeScreen() {
     router.push({ pathname: '/quiz' as any, params: { category: selectedCategory } });
   };
 
+  const handleStartExam = (mode: 'full' | 'mini', qCount: 20 | 40 | 80 = 80) => {
+    const canStart = usePremiumStore.getState().consumeExam();
+    if (!canStart) {
+      setShowPaywall(true);
+      return;
+    }
+
+    const config: ExamConfig = {
+      mode,
+      questionCount: mode === 'full' ? 80 : qCount,
+      timeLimitMinutes: mode === 'full' ? 150 : getExamTimeLimitMinutes(qCount),
+    };
+    router.push({ pathname: '/exam' as any, params: { examConfigJson: JSON.stringify(config) } });
+  };
+
+  const handleMiniExam = () => {
+    Alert.alert('Mini Sınav', 'Kaç soru çözmek istiyorsun?', [
+      { text: '20 Soru', onPress: () => handleStartExam('mini', 20) },
+      { text: '40 Soru', onPress: () => handleStartExam('mini', 40) },
+      { text: '80 Soru', onPress: () => handleStartExam('mini', 80) },
+      { text: 'İptal', style: 'cancel' },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={[Colors.primary, Colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
@@ -40,6 +76,105 @@ export default function PracticeScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentInner} showsVerticalScrollIndicator={false}>
+        {/* Exam Mode Section */}
+        <Text style={styles.sectionTitle}>Sınav Modu</Text>
+        <View style={styles.examCards}>
+          <TouchableOpacity
+            style={styles.examCard}
+            activeOpacity={0.7}
+            onPress={() => handleStartExam('full')}
+          >
+            <LinearGradient
+              colors={[Colors.examAccent + '15', Colors.examAccent + '05']}
+              style={styles.examCardGradient}
+            >
+              <Timer color={Colors.examAccent} size={24} />
+              <View style={styles.examCardContent}>
+                <Text style={styles.examCardTitle}>Tam Simülasyon</Text>
+                <Text style={styles.examCardDesc}>80 soru · 150 dakika</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.examCard}
+            activeOpacity={0.7}
+            onPress={handleMiniExam}
+          >
+            <LinearGradient
+              colors={[Colors.accent + '15', Colors.accent + '05']}
+              style={styles.examCardGradient}
+            >
+              <Clock color={Colors.accent} size={24} />
+              <View style={styles.examCardContent}>
+                <Text style={styles.examCardTitle}>Mini Sınav</Text>
+                <Text style={styles.examCardDesc}>20/40/80 soru · sen seç</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
+        {/* Study Plans */}
+        <TouchableOpacity
+          style={styles.studyPlanCard}
+          activeOpacity={0.7}
+          onPress={() => router.push('/study-plans' as any)}
+        >
+          <View style={styles.studyPlanLeft}>
+            <View style={[styles.studyPlanIcon, { backgroundColor: Colors.examAccent + '15' }]}>
+              <Calendar size={20} color={Colors.examAccent} />
+            </View>
+            <View style={styles.studyPlanInfo}>
+              <Text style={styles.studyPlanTitle}>Çalışma Planları</Text>
+              <Text style={styles.studyPlanSub}>
+                {activePlan ? `${getActivePlanDef()?.title} · %${getPlanProgress().percentage}` : 'Sistematik hazırlık için plan seç'}
+              </Text>
+            </View>
+          </View>
+          <ChevronRight size={18} color={Colors.textLight} />
+        </TouchableOpacity>
+
+        {/* Bookmarked Questions */}
+        {bookmarkCount > 0 && (
+          <TouchableOpacity
+            style={styles.bookmarkCard}
+            activeOpacity={0.7}
+            onPress={() => router.push('/bookmarked-quiz' as any)}
+          >
+            <View style={styles.studyPlanLeft}>
+              <View style={[styles.studyPlanIcon, { backgroundColor: Colors.accent + '15' }]}>
+                <Bookmark size={20} color={Colors.accent} />
+              </View>
+              <View style={styles.studyPlanInfo}>
+                <Text style={styles.studyPlanTitle}>Kaydedilen Sorular</Text>
+                <Text style={styles.studyPlanSub}>{bookmarkCount} kayıtlı soru</Text>
+              </View>
+            </View>
+            <ChevronRight size={18} color={Colors.textLight} />
+          </TouchableOpacity>
+        )}
+
+        {/* Grammar Library */}
+        <TouchableOpacity
+          style={styles.studyPlanCard}
+          activeOpacity={0.7}
+          onPress={() => router.push('/grammar-library' as any)}
+        >
+          <View style={styles.studyPlanLeft}>
+            <View style={[styles.studyPlanIcon, { backgroundColor: '#8B5CF6' + '15' }]}>
+              <Library size={20} color={'#8B5CF6'} />
+            </View>
+            <View style={styles.studyPlanInfo}>
+              <Text style={styles.studyPlanTitle}>Gramer Kütüphanesi</Text>
+              <Text style={styles.studyPlanSub}>{grammarReadCount}/{grammarTotalTopics} konu okundu</Text>
+            </View>
+          </View>
+          <ChevronRight size={18} color={Colors.textLight} />
+        </TouchableOpacity>
+
+        {/* Practice Mode */}
+        <Text style={styles.sectionTitle}>Pratik Modu</Text>
+
         <View style={styles.modeCards}>
           <TouchableOpacity
             style={[styles.modeCard, selectedCategory === 'all' && styles.modeCardActive]}
@@ -95,6 +230,8 @@ export default function PracticeScreen() {
 
         <View style={{ height: 30 }} />
       </ScrollView>
+
+      <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
 }
@@ -123,6 +260,86 @@ const styles = StyleSheet.create({
   },
   contentInner: {
     padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  examCards: {
+    gap: 10,
+    marginBottom: 24,
+  },
+  examCard: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  examCardGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    gap: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+  },
+  examCardContent: {
+    flex: 1,
+  },
+  examCardTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  examCardDesc: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  studyPlanCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
+  },
+  bookmarkCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+  },
+  studyPlanLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  studyPlanIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  studyPlanInfo: {
+    flex: 1,
+  },
+  studyPlanTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  studyPlanSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   modeCards: {
     marginBottom: 24,
@@ -157,12 +374,6 @@ const styles = StyleSheet.create({
   modeCountActive: {
     color: Colors.accent,
     fontWeight: '600' as const,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 12,
   },
   categoryGrid: {
     flexDirection: 'row',

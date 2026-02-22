@@ -2,13 +2,16 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { X, ChevronRight, CheckCircle, XCircle, Trophy, ArrowLeft } from 'lucide-react-native';
+import { X, ChevronRight, CheckCircle, XCircle, Trophy, ArrowLeft, Bookmark, BookmarkCheck } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { questions } from '@/mocks/questions';
+import { passages } from '@/mocks/passages';
 import { useStudy } from '@/providers/StudyProvider';
-import { Question, QuestionCategory } from '@/types';
+import { usePremiumStore } from '@/stores/premiumStore';
+import { useBookmarkStore } from '@/stores/bookmarkStore';
+import { Question, QuestionCategory, ReadingQuestion } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -17,6 +20,7 @@ export default function QuizScreen() {
   const router = useRouter();
   const { category } = useLocalSearchParams<{ category: string }>();
   const { recordAnswer } = useStudy();
+  const { isBookmarked, toggleBookmark } = useBookmarkStore();
 
   const quizQuestions = useMemo(() => {
     const filtered = category === 'all'
@@ -40,6 +44,13 @@ export default function QuizScreen() {
   const handleSelectAnswer = useCallback((index: number) => {
     if (isAnswered) return;
 
+    // Premium daily question limit check
+    const canAnswer = usePremiumStore.getState().consumeQuestion();
+    if (!canAnswer) {
+      // Will be handled by PaywallScreen in the UI layer
+      return;
+    }
+
     setSelectedAnswer(index);
     setIsAnswered(true);
 
@@ -51,7 +62,7 @@ export default function QuizScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
 
-    recordAnswer(currentQuestion.category, isCorrect);
+    recordAnswer(currentQuestion.id, currentQuestion.category, isCorrect);
   }, [isAnswered, currentQuestion, recordAnswer]);
 
   const handleNext = useCallback(() => {
@@ -148,8 +159,37 @@ export default function QuizScreen() {
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollInner} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
-          <View style={styles.categoryTag}>
-            <Text style={styles.categoryTagText}>{getCategoryLabel(currentQuestion.category)}</Text>
+          {/* Reading passage */}
+          {(() => {
+            const rq = currentQuestion as ReadingQuestion;
+            const passage = rq.passageId ? passages.find(p => p.id === rq.passageId) : undefined;
+            if (passage) {
+              return (
+                <View style={styles.passageContainer}>
+                  {passage.title && <Text style={styles.passageTitle}>{passage.title}</Text>}
+                  <ScrollView style={styles.passageScroll} nestedScrollEnabled>
+                    <Text style={styles.passageText}>{passage.text}</Text>
+                  </ScrollView>
+                </View>
+              );
+            }
+            return null;
+          })()}
+
+          <View style={styles.categoryRow}>
+            <View style={styles.categoryTag}>
+              <Text style={styles.categoryTagText}>{getCategoryLabel(currentQuestion.category)}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => { toggleBookmark(currentQuestion.id); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+              style={styles.bookmarkButton}
+            >
+              {isBookmarked(currentQuestion.id) ? (
+                <BookmarkCheck size={20} color={Colors.accent} />
+              ) : (
+                <Bookmark size={20} color={Colors.textLight} />
+              )}
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.questionText}>{currentQuestion.question}</Text>
@@ -228,6 +268,7 @@ function getCategoryLabel(cat: QuestionCategory): string {
     paragraph: 'Paragraf',
     translation: 'Çeviri',
     cloze: 'Boşluk Doldurma',
+    reading: 'Okuduğunu Anlama',
   };
   return labels[cat];
 }
@@ -294,13 +335,21 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
   categoryTag: {
     alignSelf: 'flex-start',
     backgroundColor: Colors.primaryLight + '15',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 8,
-    marginBottom: 14,
+  },
+  bookmarkButton: {
+    padding: 8,
   },
   categoryTagText: {
     fontSize: 12,
@@ -477,6 +526,29 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700' as const,
     color: Colors.primary,
+  },
+  passageContainer: {
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    maxHeight: 250,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.accent,
+  },
+  passageTitle: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.primary,
+    marginBottom: 8,
+  },
+  passageScroll: {
+    maxHeight: 200,
+  },
+  passageText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: Colors.text,
   },
   emptyText: {
     fontSize: 16,

@@ -2,17 +2,30 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Flame, Target, TrendingUp, RotateCcw, BookOpen } from 'lucide-react-native';
+import { Award, Flame, Target, TrendingUp, RotateCcw, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Library } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import Colors from '@/constants/colors';
 import { useStudy } from '@/providers/StudyProvider';
 import { studyCategories } from '@/mocks/questions';
+import { formatDuration } from '@/utils/examUtils';
+import { useAchievementStore } from '@/stores/achievementStore';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { allBadges } from '@/data/badges';
+import BadgeCard from '@/components/BadgeCard';
+import XPBar from '@/components/XPBar';
+import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
+import { useGrammarStore } from '@/stores/grammarStore';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { stats, vocabCards, resetStats } = useStudy();
 
   const accuracy = stats.totalAnswered > 0 ? Math.round((stats.correctAnswers / stats.totalAnswered) * 100) : 0;
   const masteredWords = vocabCards.filter(c => c.mastered).length;
+  const topRecord = usePersonalRecordsStore(s => s.getTopRecords()[0]);
+  const grammarReadCount = useGrammarStore(s => s.getReadCount());
+  const grammarTotalTopics = useGrammarStore(s => s.getTotalTopics());
 
   const handleReset = () => {
     Alert.alert(
@@ -43,6 +56,7 @@ export default function ProfileScreen() {
         </View>
         <Text style={styles.headerTitle}>YDS Hazırlık</Text>
         <Text style={styles.headerSubtitle}>İstatistiklerini takip et</Text>
+        <XPBar xp={stats.xp || 0} />
       </LinearGradient>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentInner} showsVerticalScrollIndicator={false}>
@@ -97,6 +111,133 @@ export default function ProfileScreen() {
             </View>
           </View>
         ))}
+
+        {/* Analytics Button */}
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          activeOpacity={0.7}
+          onPress={() => router.push('/analytics' as any)}
+        >
+          <BarChart3 size={20} color={Colors.examAccent} />
+          <Text style={styles.analyticsText}>Detaylı Analiz</Text>
+          <ChevronRight size={18} color={Colors.textLight} />
+        </TouchableOpacity>
+
+        {/* Personal Records */}
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          activeOpacity={0.7}
+          onPress={() => router.push('/personal-records' as any)}
+        >
+          <Medal size={20} color="#F59E0B" />
+          <Text style={styles.analyticsText}>
+            Kişisel Rekorlar{topRecord ? ` · ${topRecord.displayValue}` : ''}
+          </Text>
+          <ChevronRight size={18} color={Colors.textLight} />
+        </TouchableOpacity>
+
+        {/* Grammar Library */}
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          activeOpacity={0.7}
+          onPress={() => router.push('/grammar-library' as any)}
+        >
+          <Library size={20} color="#8B5CF6" />
+          <Text style={styles.analyticsText}>
+            Gramer Kütüphanesi · {grammarReadCount}/{grammarTotalTopics}
+          </Text>
+          <ChevronRight size={18} color={Colors.textLight} />
+        </TouchableOpacity>
+
+        {/* Badges */}
+        <Text style={styles.sectionTitle}>Rozetler</Text>
+        <View style={styles.badgeGrid}>
+          {allBadges.map(badge => (
+            <BadgeCard
+              key={badge.id}
+              badge={badge}
+              unlocked={useAchievementStore.getState().isUnlocked(badge.id)}
+            />
+          ))}
+        </View>
+
+        {/* Notification Settings */}
+        <Text style={styles.sectionTitle}>Bildirimler</Text>
+        <View style={styles.notifCard}>
+          <TouchableOpacity
+            style={styles.notifRow}
+            onPress={() => {
+              const store = useNotificationStore.getState();
+              store.updatePreferences({ dailyReminder: !store.preferences.dailyReminder });
+            }}
+          >
+            {useNotificationStore.getState().preferences.dailyReminder ? (
+              <Bell size={18} color={Colors.accent} />
+            ) : (
+              <BellOff size={18} color={Colors.textLight} />
+            )}
+            <View style={styles.notifInfo}>
+              <Text style={styles.notifTitle}>Günlük Hatırlatıcı</Text>
+              <Text style={styles.notifSub}>Her gün çalışma hatırlatması al</Text>
+            </View>
+            <View style={[styles.notifToggle, useNotificationStore.getState().preferences.dailyReminder && styles.notifToggleActive]}>
+              <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.dailyReminder && styles.notifToggleDotActive]} />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.notifRow}
+            onPress={() => {
+              const store = useNotificationStore.getState();
+              store.updatePreferences({ milestoneNotifications: !store.preferences.milestoneNotifications });
+            }}
+          >
+            <Trophy size={18} color={useNotificationStore.getState().preferences.milestoneNotifications ? Colors.accent : Colors.textLight} />
+            <View style={styles.notifInfo}>
+              <Text style={styles.notifTitle}>Başarı Bildirimleri</Text>
+              <Text style={styles.notifSub}>Rozet ve milestone bildirimleri</Text>
+            </View>
+            <View style={[styles.notifToggle, useNotificationStore.getState().preferences.milestoneNotifications && styles.notifToggleActive]}>
+              <View style={[styles.notifToggleDot, useNotificationStore.getState().preferences.milestoneNotifications && styles.notifToggleDotActive]} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Exam History */}
+        {stats.examHistory.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Sınav Geçmişi</Text>
+            {stats.examHistory.slice(-5).reverse().map((exam) => {
+              const pct = Math.round((exam.score / exam.totalQuestions) * 100);
+              const modeLabel = exam.config.mode === 'full' ? 'Tam Simülasyon' : 'Mini Sınav';
+              const date = new Date(exam.date);
+              const dateStr = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
+              return (
+                <TouchableOpacity
+                  key={exam.id}
+                  style={styles.examHistoryCard}
+                  activeOpacity={0.7}
+                  onPress={() => router.push({ pathname: '/exam-result' as any, params: { examResultId: exam.id } })}
+                >
+                  <View style={styles.examHistoryLeft}>
+                    <View style={[styles.examHistoryIcon, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
+                      <Trophy size={18} color={pct >= 70 ? Colors.success : Colors.warning} />
+                    </View>
+                    <View style={styles.examHistoryInfo}>
+                      <Text style={styles.examHistoryTitle}>{modeLabel}</Text>
+                      <Text style={styles.examHistorySub}>{dateStr} · {exam.score}/{exam.totalQuestions} · {formatDuration(exam.timeSpentSeconds)}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.examHistoryRight}>
+                    <View style={[styles.examHistoryBadge, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
+                      <Text style={[styles.examHistoryPercent, { color: pct >= 70 ? Colors.success : Colors.warning }]}>%{pct}</Text>
+                    </View>
+                    <ChevronRight size={16} color={Colors.textLight} />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
 
         <TouchableOpacity style={styles.resetButton} activeOpacity={0.7} onPress={handleReset} testID="reset-stats">
           <RotateCcw color={Colors.error} size={18} />
@@ -252,6 +393,124 @@ const styles = StyleSheet.create({
   },
   categoryAccuracy: {
     fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  analyticsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.examAccent + '10',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: Colors.examAccent + '25',
+  },
+  analyticsText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  badgeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    gap: 8,
+  },
+  notifCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 24,
+  },
+  notifRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 12,
+  },
+  notifInfo: {
+    flex: 1,
+  },
+  notifTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  notifSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  notifToggle: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.border,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  notifToggleActive: {
+    backgroundColor: Colors.accent,
+  },
+  notifToggleDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  notifToggleDotActive: {
+    alignSelf: 'flex-end',
+  },
+  examHistoryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  examHistoryLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  examHistoryIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  examHistoryInfo: {
+    flex: 1,
+  },
+  examHistoryTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  examHistorySub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  examHistoryRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  examHistoryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  examHistoryPercent: {
+    fontSize: 13,
     fontWeight: '700' as const,
   },
   resetButton: {

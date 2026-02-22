@@ -16,6 +16,9 @@ const Colors = {
   warning: '#FF9500',
   border: '#E0DCD6',
   cardShadow: 'rgba(27, 37, 65, 0.08)',
+  examAccent: '#6366F1',
+  locked: '#94A3B8',
+  premium: '#D4A843',
 };
 
 export default Colors;

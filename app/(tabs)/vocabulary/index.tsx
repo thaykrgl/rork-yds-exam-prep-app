@@ -4,8 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check, X, RotateCcw, Star } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { Lock, Crown } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useStudy } from '@/providers/StudyProvider';
+import { usePremiumStore } from '@/stores/premiumStore';
+import PaywallScreen from '@/components/PaywallScreen';
 import { VocabularyCard } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -13,11 +16,15 @@ const CARD_WIDTH = SCREEN_WIDTH - 48;
 
 type FilterType = 'all' | 'learning' | 'mastered';
 
+const FREE_CARD_LIMIT = 20;
+
 export default function VocabularyScreen() {
   const insets = useSafeAreaInsets();
   const { vocabCards, toggleMastered } = useStudy();
+  const { isPremium } = usePremiumStore();
   const [filter, setFilter] = useState<FilterType>('all');
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const filteredCards = vocabCards.filter(card => {
     if (filter === 'learning') return !card.mastered;
@@ -45,8 +52,28 @@ export default function VocabularyScreen() {
     toggleMastered(cardId);
   }, [toggleMastered]);
 
-  const renderCard = useCallback(({ item }: { item: VocabularyCard }) => {
+  const renderCard = useCallback(({ item, index }: { item: VocabularyCard; index: number }) => {
     const isFlipped = flippedCards.has(item.id);
+    const isLocked = !isPremium && index >= FREE_CARD_LIMIT;
+
+    if (isLocked) {
+      return (
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.7}
+          onPress={() => setShowPaywall(true)}
+          testID={`vocab-card-locked-${item.id}`}
+        >
+          <View style={[styles.cardInner, styles.cardLocked]}>
+            <View style={styles.cardFront}>
+              <Lock size={28} color={Colors.locked} />
+              <Text style={styles.lockedText}>Premium ile Aç</Text>
+              <Text style={styles.lockedHint}>Bu karta erişmek için premium'a geç</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
+    }
 
     return (
       <TouchableOpacity
@@ -95,7 +122,7 @@ export default function VocabularyScreen() {
         </View>
       </TouchableOpacity>
     );
-  }, [flippedCards, handleFlip, handleToggleMastered]);
+  }, [flippedCards, handleFlip, handleToggleMastered, isPremium]);
 
   return (
     <View style={styles.container}>
@@ -123,6 +150,16 @@ export default function VocabularyScreen() {
         ))}
       </View>
 
+      {/* Premium Banner for free users */}
+      {!isPremium && vocabCards.length > FREE_CARD_LIMIT && (
+        <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.7} onPress={() => setShowPaywall(true)}>
+          <Crown size={16} color={Colors.accent} />
+          <Text style={styles.premiumBannerText}>
+            İlk {FREE_CARD_LIMIT} kart ücretsiz · Premium ile tümüne eriş
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {filteredCards.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>📚</Text>
@@ -139,6 +176,8 @@ export default function VocabularyScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
 }
@@ -313,6 +352,40 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '600' as const,
     fontSize: 14,
+  },
+  cardLocked: {
+    borderLeftColor: Colors.locked,
+    backgroundColor: Colors.surfaceAlt,
+  },
+  lockedText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.locked,
+    marginTop: 8,
+  },
+  lockedHint: {
+    fontSize: 12,
+    color: Colors.textLight,
+    marginTop: 4,
+  },
+  premiumBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: Colors.accent + '12',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.accent + '30',
+  },
+  premiumBannerText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.accent,
   },
   emptyState: {
     flex: 1,

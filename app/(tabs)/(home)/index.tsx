@@ -3,11 +3,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, ChevronRight } from 'lucide-react-native';
+import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, Newspaper, ChevronRight, Trophy, Clock, RefreshCw, Calendar, CheckCircle } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useStudy } from '@/providers/StudyProvider';
 import { studyCategories } from '@/mocks/questions';
+import { useSpacedRepetitionStore } from '@/stores/spacedRepetitionStore';
+import { useStudyPlanStore } from '@/stores/studyPlanStore';
 import { QuestionCategory } from '@/types';
+import { formatDuration } from '@/utils/examUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -17,12 +20,18 @@ const categoryIcons: Record<string, React.ComponentType<{ color: string; size: n
   FileText,
   Languages,
   PuzzleIcon: Puzzle,
+  Newspaper,
 };
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { stats } = useStudy();
+  const dueCount = useSpacedRepetitionStore((s) => s.getDueCount());
+  const { activePlan, getTodaysTasks, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
+  const todaysTasks = getTodaysTasks();
+  const planProgress = getPlanProgress();
+  const planDef = getActivePlanDef();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -98,6 +107,102 @@ export default function HomeScreen() {
             <Text style={styles.statLabel}>Toplam</Text>
           </View>
         </View>
+
+        {/* Daily Review */}
+        {dueCount > 0 && (
+          <TouchableOpacity
+            style={styles.reviewCard}
+            activeOpacity={0.7}
+            onPress={() => router.push('/daily-review' as any)}
+          >
+            <View style={styles.reviewCardLeft}>
+              <View style={styles.reviewCardIcon}>
+                <RefreshCw size={20} color="#14B8A6" />
+              </View>
+              <View>
+                <Text style={styles.reviewCardTitle}>Günlük Tekrar</Text>
+                <Text style={styles.reviewCardSub}>{dueCount} soru tekrar bekliyor</Text>
+              </View>
+            </View>
+            <ChevronRight size={18} color={Colors.textLight} />
+          </TouchableOpacity>
+        )}
+
+        {/* Active Study Plan Tasks */}
+        {activePlan && todaysTasks.length > 0 && (
+          <TouchableOpacity
+            style={styles.planCard}
+            activeOpacity={0.7}
+            onPress={() => router.push({ pathname: '/study-plan-detail' as any, params: { planId: activePlan.planId } })}
+          >
+            <View style={styles.planCardHeader}>
+              <Calendar size={16} color={Colors.examAccent} />
+              <Text style={styles.planCardLabel}>{planDef?.title}</Text>
+              <Text style={styles.planCardPercent}>%{planProgress.percentage}</Text>
+            </View>
+            {todaysTasks.slice(0, 3).map(task => (
+              <View key={task.id} style={styles.planTaskRow}>
+                {task.completed ? (
+                  <CheckCircle size={14} color={Colors.success} />
+                ) : (
+                  <View style={styles.planTaskCircle} />
+                )}
+                <Text style={[styles.planTaskText, task.completed && styles.planTaskDone]} numberOfLines={1}>
+                  {task.title}
+                </Text>
+              </View>
+            ))}
+          </TouchableOpacity>
+        )}
+
+        {/* Exam Quick Launch */}
+        <TouchableOpacity
+          style={styles.examCard}
+          activeOpacity={0.7}
+          onPress={() => router.push('/exam' as any)}
+        >
+          <LinearGradient
+            colors={[Colors.examAccent, Colors.examAccent + 'CC']}
+            style={styles.examCardGradient}
+          >
+            <View style={styles.examCardLeft}>
+              <Trophy size={24} color="#FFFFFF" />
+              <View style={styles.examCardInfo}>
+                <Text style={styles.examCardTitle}>Deneme Sınavı</Text>
+                <Text style={styles.examCardSub}>YDS formatında sınav simülasyonu</Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Last Exam Result */}
+        {stats.examHistory.length > 0 && (() => {
+          const lastExam = stats.examHistory[stats.examHistory.length - 1];
+          const pct = Math.round((lastExam.score / lastExam.totalQuestions) * 100);
+          return (
+            <TouchableOpacity
+              style={styles.lastExamCard}
+              activeOpacity={0.7}
+              onPress={() => router.push({ pathname: '/exam-result' as any, params: { examResultId: lastExam.id } })}
+            >
+              <View style={styles.lastExamLeft}>
+                <View style={[styles.lastExamIcon, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
+                  <Target size={20} color={pct >= 70 ? Colors.success : Colors.warning} />
+                </View>
+                <View>
+                  <Text style={styles.lastExamTitle}>Son Sınav Sonucu</Text>
+                  <Text style={styles.lastExamSub}>
+                    {lastExam.score}/{lastExam.totalQuestions} doğru · {formatDuration(lastExam.timeSpentSeconds)}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.lastExamBadge, { backgroundColor: pct >= 70 ? Colors.success + '15' : Colors.warning + '15' }]}>
+                <Text style={[styles.lastExamPercent, { color: pct >= 70 ? Colors.success : Colors.warning }]}>%{pct}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })()}
 
         <Text style={styles.sectionTitle}>Kategoriler</Text>
 
@@ -264,5 +369,154 @@ const styles = StyleSheet.create({
   categorySubtitle: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  reviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#14B8A6' + '10',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#14B8A6' + '25',
+  },
+  reviewCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  reviewCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#14B8A6' + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewCardTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  reviewCardSub: {
+    fontSize: 12,
+    color: '#14B8A6',
+    marginTop: 2,
+    fontWeight: '500' as const,
+  },
+  planCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    gap: 10,
+  },
+  planCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  planCardLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  planCardPercent: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: Colors.examAccent,
+  },
+  planTaskRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  planTaskCircle: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    borderColor: Colors.textLight,
+  },
+  planTaskText: {
+    fontSize: 13,
+    color: Colors.text,
+    flex: 1,
+  },
+  planTaskDone: {
+    color: Colors.textLight,
+    textDecorationLine: 'line-through' as const,
+  },
+  examCard: {
+    marginBottom: 16,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  examCardGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 18,
+    borderRadius: 14,
+  },
+  examCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  examCardInfo: {
+    gap: 2,
+  },
+  examCardTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  examCardSub: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  lastExamCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+  },
+  lastExamLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  lastExamIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lastExamTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  lastExamSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  lastExamBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  lastExamPercent: {
+    fontSize: 15,
+    fontWeight: '700' as const,
   },
 });
