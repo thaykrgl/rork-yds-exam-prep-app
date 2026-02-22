@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Flame, Target, TrendingUp, RotateCcw, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Library, Moon, Sun } from 'lucide-react-native';
+import { Award, Flame, Target, TrendingUp, RotateCcw, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Library, Moon, Sun, Bookmark } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
@@ -13,6 +13,7 @@ import { useAchievementStore } from '@/stores/achievementStore';
 import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
 import { useGrammarStore } from '@/stores/grammarStore';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { requestNotificationPermissions } from '@/utils/notifications';
 import { allBadges } from '@/data/badges';
 import BadgeCard from '@/components/BadgeCard';
@@ -23,12 +24,27 @@ export default function ProfileScreen() {
   const router = useRouter();
   const colors = useColors();
   const { mode, toggleTheme } = useThemeStore();
-  const { stats, vocabCards, resetStats } = useStudy();
+  const { stats, vocabCards, resetStats, updateDailyGoal } = useStudy();
+
+  const handleUpdateGoal = () => {
+    Alert.alert(
+      'Günlük Hedef',
+      'Günde kaç soru çözmek istersin?',
+      [
+        { text: '10 Soru', onPress: () => updateDailyGoal(10) },
+        { text: '20 Soru', onPress: () => updateDailyGoal(20) },
+        { text: '50 Soru', onPress: () => updateDailyGoal(50) },
+        { text: '100 Soru', onPress: () => updateDailyGoal(100) },
+        { text: 'Vazgeç', style: 'cancel' },
+      ]
+    );
+  };
 
   const accuracy = stats.totalAnswered > 0 ? Math.round((stats.correctAnswers / stats.totalAnswered) * 100) : 0;
   const masteredWords = vocabCards.filter(c => c.mastered).length;
   const topRecord = usePersonalRecordsStore(s => s.getTopRecords()[0]);
   const grammarReadCount = useGrammarStore(s => s.getReadCount());
+  const bookmarkCount = useBookmarkStore(s => s.getBookmarkCount());
   const grammarTotalTopics = useGrammarStore(s => s.getTotalTopics());
 
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -151,7 +167,11 @@ export default function ProfileScreen() {
         </View>
 
         {/* Vocab card */}
-        <View style={styles.vocabCard}>
+        <TouchableOpacity 
+          style={styles.vocabCard}
+          activeOpacity={0.7}
+          onPress={() => router.push({ pathname: '/(tabs)/vocabulary', params: { initialFilter: 'mastered' } } as any)}
+        >
           <BookOpen color={colors.accent} size={20} />
           <View style={styles.vocabInfo}>
             <Text style={styles.vocabTitle}>Kelime Bilgisi</Text>
@@ -160,10 +180,10 @@ export default function ProfileScreen() {
           <View style={styles.vocabBadge}>
             <Text style={styles.vocabBadgeText}>%{Math.round((masteredWords / (vocabCards.length || 1)) * 100)}</Text>
           </View>
-        </View>
+          <ChevronRight size={18} color={colors.textLight} />
+        </TouchableOpacity>
 
         {/* Category details */}
-        <Text style={styles.sectionTitle}>Kategori Bazlı Performans</Text>
         {categoryData.filter(c => c.answered > 0).map(cat => (
           <View key={cat.id} style={styles.categoryRow}>
             <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
@@ -212,6 +232,34 @@ export default function ProfileScreen() {
           <Library size={20} color="#8B5CF6" />
           <Text style={styles.analyticsText}>
             Gramer Kütüphanesi · {grammarReadCount}/{grammarTotalTopics}
+          </Text>
+          <ChevronRight size={18} color={colors.textLight} />
+        </TouchableOpacity>
+
+        {/* Bookmarked Questions */}
+        {bookmarkCount > 0 && (
+          <TouchableOpacity
+            style={styles.analyticsButton}
+            activeOpacity={0.7}
+            onPress={() => router.push('/bookmarked-quiz' as any)}
+          >
+            <Bookmark size={20} color={colors.accent} />
+            <Text style={styles.analyticsText}>
+              Kaydedilen Sorular · {bookmarkCount} soru
+            </Text>
+            <ChevronRight size={18} color={colors.textLight} />
+          </TouchableOpacity>
+        )}
+
+        {/* Daily Goal Settings */}
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          activeOpacity={0.7}
+          onPress={handleUpdateGoal}
+        >
+          <Target size={20} color={colors.accent} />
+          <Text style={styles.analyticsText}>
+            Günlük Hedef · {stats.dailyGoal} Soru
           </Text>
           <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
@@ -433,7 +481,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginTop: 2,
   },
   vocabBadge: {
-    backgroundColor: colors.accentSoft,
+    backgroundColor: colors.accent + '20', // Use 20% opacity for better contrast
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,

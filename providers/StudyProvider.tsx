@@ -161,6 +161,14 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
     saveStatsMutation.mutate(defaultStats);
   }, [saveStatsMutation]);
 
+  const updateDailyGoal = useCallback((newGoal: number) => {
+    setStats(prev => {
+      const updated = { ...prev, dailyGoal: newGoal };
+      saveStatsMutation.mutate(updated);
+      return updated;
+    });
+  }, [saveStatsMutation]);
+
   return {
     stats,
     vocabCards,
@@ -168,6 +176,7 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
     toggleMastered,
     saveExamResult,
     resetStats,
+    updateDailyGoal,
     isLoading: statsQuery.isLoading || vocabQuery.isLoading,
   };
 });

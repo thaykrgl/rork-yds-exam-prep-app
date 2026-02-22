@@ -370,7 +370,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderLeftColor: colors.accent,
   },
   ruleFormulaWrap: {
-    backgroundColor: colors.primaryDark + '08',
+    backgroundColor: colors.accent + '12',
     borderRadius: 8,
     padding: 10,
     marginBottom: 8,
@@ -378,7 +378,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   ruleFormula: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: colors.primary,
+    color: colors.accent,
     fontFamily: 'monospace',
   },
   ruleExplanation: {

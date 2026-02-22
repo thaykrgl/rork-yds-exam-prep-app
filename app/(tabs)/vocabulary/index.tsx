@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Check, X, RotateCcw, Star } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Lock, Crown } from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePremiumStore } from '@/stores/premiumStore';
@@ -21,11 +22,19 @@ const FREE_CARD_LIMIT = 20;
 export default function VocabularyScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const params = useLocalSearchParams<{ initialFilter?: FilterType }>();
   const { vocabCards, toggleMastered } = useStudy();
   const isPremium = usePremiumStore(s => s.tier === 'premium');
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>(params.initialFilter || 'all');
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [showPaywall, setShowPaywall] = useState(false);
+
+  // Sync filter when parameters change (handle navigation from other screens)
+  React.useEffect(() => {
+    if (params.initialFilter) {
+      setFilter(params.initialFilter);
+    }
+  }, [params.initialFilter]);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -100,7 +109,7 @@ export default function VocabularyScreen() {
           ) : (
             <View style={styles.cardBack}>
               <Text style={styles.meaningText}>{item.meaning}</Text>
-              <div style={{ flex: 1 }} />
+              <View style={{ flex: 1 }} />
               <View style={styles.exampleBox}>
                 <Text style={styles.exampleText}>"{item.example}"</Text>
               </View>

@@ -137,25 +137,6 @@ export default function PracticeScreen() {
           <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
 
-        {/* Bookmarked Questions */}
-        {bookmarkCount > 0 && (
-          <TouchableOpacity
-            style={styles.bookmarkCard}
-            activeOpacity={0.7}
-            onPress={() => router.push('/bookmarked-quiz' as any)}
-          >
-            <View style={styles.studyPlanLeft}>
-              <View style={[styles.studyPlanIcon, { backgroundColor: colors.accent + '15' }]}>
-                <Bookmark size={20} color={colors.accent} />
-              </View>
-              <View style={styles.studyPlanInfo}>
-                <Text style={styles.studyPlanTitle}>Kaydedilen Sorular</Text>
-                <Text style={styles.studyPlanSub}>{bookmarkCount} kayıtlı soru</Text>
-              </View>
-            </View>
-            <ChevronRight size={18} color={colors.textLight} />
-          </TouchableOpacity>
-        )}
 
         {/* Grammar Library */}
         <TouchableOpacity

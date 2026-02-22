@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensions, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, Newspaper, ChevronRight, Trophy, Clock, RefreshCw, Calendar, CheckCircle, Moon, Sun } from 'lucide-react-native';
+import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, Newspaper, ChevronRight, Trophy, Clock, RefreshCw, Calendar, CheckCircle, Moon, Sun, Settings2 } from 'lucide-react-native';
 import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
 import { useStudy } from '@/providers/StudyProvider';
@@ -20,7 +20,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const colors = useColors();
   const { mode, toggleTheme } = useThemeStore();
-  const { stats } = useStudy();
+  const { stats, updateDailyGoal } = useStudy();
   const dueCount = useSpacedRepetitionStore((s) => s.getDueCount());
   const unlockedBadgesCount = useAchievementStore((s) => s.unlockedBadges.length);
   const { activePlan, getTodaysTasks, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
@@ -31,6 +31,20 @@ export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const handleUpdateGoal = () => {
+    Alert.alert(
+      'Günlük Hedef',
+      'Günde kaç soru çözmek istersin?',
+      [
+        { text: '10 Soru', onPress: () => updateDailyGoal(10) },
+        { text: '20 Soru', onPress: () => updateDailyGoal(20) },
+        { text: '50 Soru', onPress: () => updateDailyGoal(50) },
+        { text: '100 Soru', onPress: () => updateDailyGoal(100) },
+        { text: 'Vazgeç', style: 'cancel' },
+      ]
+    );
+  };
 
   const dailyPercent = Math.min(stats.dailyProgress / (stats.dailyGoal || 1), 1);
   const accuracy = stats.totalAnswered > 0 ? Math.round((stats.correctAnswers / stats.totalAnswered) * 100) : 0;
@@ -84,11 +98,16 @@ export default function HomeScreen() {
               <Target color={colors.accent} size={20} />
               <Text style={styles.dailyTitle}>Günlük Hedef</Text>
             </View>
-            <View style={styles.dailyBadge}>
+            <TouchableOpacity 
+              style={styles.dailyBadge}
+              onPress={handleUpdateGoal}
+              activeOpacity={0.7}
+            >
               <Text style={styles.dailyCount}>
                 {stats.dailyProgress}/{stats.dailyGoal}
               </Text>
-            </View>
+              <Settings2 size={12} color={colors.accent} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
           </View>
           <View style={styles.progressBar}>
             <Animated.View style={[styles.progressFill, { width: progressWidth, backgroundColor: colors.accent }]} />
@@ -326,9 +345,11 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   dailyBadge: {
     backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   progressBar: {
     height: 8,
