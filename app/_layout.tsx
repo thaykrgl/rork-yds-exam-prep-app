@@ -37,8 +37,9 @@ function OnboardingRedirect() {
   return null;
 }
 
-function PremiumDailyReset() {
+function PremiumInitializer() {
   useEffect(() => {
+    usePremiumStore.getState().initialize();
     usePremiumStore.getState().checkAndResetDaily();
   }, []);
   return null;
@@ -112,7 +113,7 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
         <StudyProvider>
           <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
-          <PremiumDailyReset />
+          <PremiumInitializer />
           <AnalyticsSessionTracker />
           <OnboardingRedirect />
           <RootLayoutNav />

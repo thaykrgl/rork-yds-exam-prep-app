@@ -19,18 +19,28 @@ export default function QuizScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const colors = useColors();
-  const { category } = useLocalSearchParams<{ category: string }>();
+  const { category, grammarTopicId } = useLocalSearchParams<{ category: string; grammarTopicId?: string }>();
   const { recordAnswer } = useStudy();
   const { isBookmarked, toggleBookmark } = useBookmarkStore();
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const quizQuestions = useMemo(() => {
-    const filtered = category === 'all'
+    let filtered = category === 'all'
       ? [...questions]
       : questions.filter(q => q.category === category);
+
+    // Filter by grammar topic's related question IDs if provided
+    if (grammarTopicId) {
+      const { grammarTopics } = require('@/data/grammarTopics');
+      const topic = grammarTopics.find((t: any) => t.id === grammarTopicId);
+      if (topic && topic.relatedQuestionIds.length > 0) {
+        filtered = filtered.filter(q => topic.relatedQuestionIds.includes(q.id));
+      }
+    }
+
     return filtered.sort(() => Math.random() - 0.5);
-  }, [category]);
+  }, [category, grammarTopicId]);
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);

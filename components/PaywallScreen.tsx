@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,15 @@ import {
   Modal,
   StyleSheet,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Crown, Check, Infinity, BookOpen, Clock, BarChart3 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import {
+  X, Crown, Check, Infinity, BookOpen, Clock,
+  BarChart3, Shield, Sparkles,
+} from 'lucide-react-native';
+import { useColors } from '@/hooks/useColors';
 import { usePremiumStore } from '@/stores/premiumStore';
 
 interface PaywallScreenProps {
@@ -19,43 +24,67 @@ interface PaywallScreenProps {
 }
 
 const features = [
-  { icon: Infinity, text: 'Sınırsız soru çözme' },
-  { icon: Clock, text: 'Sınırsız deneme sınavı' },
-  { icon: BookOpen, text: 'Tüm kelime kartları' },
-  { icon: BarChart3, text: 'Detaylı analiz ve raporlar' },
+  { icon: Infinity, text: 'Sınırsız soru çözme', sub: 'Günlük limit yok' },
+  { icon: Clock, text: 'Sınırsız deneme sınavı', sub: 'İstediğin kadar pratik' },
+  { icon: BookOpen, text: 'Tüm kelime kartları', sub: '40+ kelime kartına erişim' },
+  { icon: BarChart3, text: 'Detaylı analiz ve raporlar', sub: 'İlerleme takibi' },
 ];
 
 export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) {
-  const { restore } = usePremiumStore();
+  const colors = useColors();
+  const { purchaseLifetime, restore, isPurchasing, isRestoring } = usePremiumStore();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubscribe = (plan: string) => {
-    // Stub for Phase 1 - RevenueCat integration will be added later
-    console.log(`[Premium] Subscribe to ${plan} - RevenueCat not yet integrated`);
-    // For testing, you can temporarily enable premium:
-    // usePremiumStore.getState().setTier('premium');
-    onClose();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const handlePurchase = async () => {
+    setError(null);
+    try {
+      const success = await purchaseLifetime();
+      if (success) {
+        onClose();
+      }
+    } catch (e: any) {
+      setError('Satın alma işlemi başarısız oldu. Lütfen tekrar deneyin.');
+    }
   };
 
   const handleRestore = async () => {
-    await restore();
-    onClose();
+    setError(null);
+    try {
+      const restored = await restore();
+      if (restored) {
+        Alert.alert('Başarılı', 'Premium üyeliğiniz geri yüklendi!');
+        onClose();
+      } else {
+        Alert.alert('Bilgi', 'Geri yüklenecek bir satın alma bulunamadı.');
+      }
+    } catch (e: any) {
+      setError('Geri yükleme başarısız oldu. Lütfen tekrar deneyin.');
+    }
   };
+
+  const isLoading = isPurchasing || isRestoring;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <SafeAreaView style={styles.container}>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <X size={22} color={Colors.textSecondary} />
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onClose}
+          disabled={isLoading}
+        >
+          <X size={22} color={colors.textSecondary} />
         </TouchableOpacity>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <LinearGradient
-            colors={[Colors.accent + '20', Colors.accent + '05']}
+            colors={[colors.accent + '20', colors.accent + '05']}
             style={styles.header}
           >
-            <View style={styles.crownContainer}>
-              <Crown size={40} color={Colors.accent} />
+            <View style={[styles.crownContainer, { backgroundColor: colors.accent + '20' }]}>
+              <Crown size={40} color={colors.accent} />
             </View>
             <Text style={styles.title}>YDS Premium</Text>
             <Text style={styles.subtitle}>
@@ -67,11 +96,14 @@ export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) 
           <View style={styles.featuresSection}>
             {features.map((feature, index) => (
               <View key={index} style={styles.featureRow}>
-                <View style={styles.featureIconContainer}>
-                  <feature.icon size={20} color={Colors.accent} />
+                <View style={[styles.featureIconContainer, { backgroundColor: colors.accent + '15' }]}>
+                  <feature.icon size={20} color={colors.accent} />
                 </View>
-                <Text style={styles.featureText}>{feature.text}</Text>
-                <Check size={18} color={Colors.success} />
+                <View style={styles.featureTextWrap}>
+                  <Text style={styles.featureText}>{feature.text}</Text>
+                  <Text style={styles.featureSub}>{feature.sub}</Text>
+                </View>
+                <Check size={18} color={colors.success} />
               </View>
             ))}
           </View>
@@ -81,82 +113,115 @@ export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) 
             <View style={styles.comparisonCard}>
               <Text style={styles.comparisonTitle}>Ücretsiz</Text>
               <View style={styles.comparisonItem}>
+                <X size={14} color={colors.error} />
                 <Text style={styles.comparisonItemText}>Günde 10 soru</Text>
               </View>
               <View style={styles.comparisonItem}>
-                <Text style={styles.comparisonItemText}>Günde 1 mini sınav</Text>
+                <X size={14} color={colors.error} />
+                <Text style={styles.comparisonItemText}>Günde 1 sınav</Text>
               </View>
               <View style={styles.comparisonItem}>
-                <Text style={styles.comparisonItemText}>20 kelime kartı</Text>
+                <X size={14} color={colors.error} />
+                <Text style={styles.comparisonItemText}>Sınırlı kelime kartı</Text>
               </View>
             </View>
 
             <View style={[styles.comparisonCard, styles.comparisonCardPremium]}>
               <LinearGradient
-                colors={[Colors.accent, Colors.accentLight]}
+                colors={[colors.accent, colors.accentLight]}
                 style={styles.premiumBadge}
               >
-                <Crown size={12} color={Colors.primary} />
-                <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+                <Crown size={12} color={colors.primary} />
+                <Text style={[styles.premiumBadgeText, { color: colors.primary }]}>PREMIUM</Text>
               </LinearGradient>
               <Text style={[styles.comparisonTitle, styles.comparisonTitlePremium]}>Premium</Text>
               <View style={styles.comparisonItem}>
-                <Text style={[styles.comparisonItemText, styles.comparisonItemTextPremium]}>Sınırsız soru</Text>
+                <Check size={14} color={colors.success} />
+                <Text style={[styles.comparisonItemText, styles.comparisonItemTextPremium]}>
+                  Sınırsız soru
+                </Text>
               </View>
               <View style={styles.comparisonItem}>
-                <Text style={[styles.comparisonItemText, styles.comparisonItemTextPremium]}>Sınırsız sınav</Text>
+                <Check size={14} color={colors.success} />
+                <Text style={[styles.comparisonItemText, styles.comparisonItemTextPremium]}>
+                  Sınırsız sınav
+                </Text>
               </View>
               <View style={styles.comparisonItem}>
-                <Text style={[styles.comparisonItemText, styles.comparisonItemTextPremium]}>40+ kelime kartı</Text>
+                <Check size={14} color={colors.success} />
+                <Text style={[styles.comparisonItemText, styles.comparisonItemTextPremium]}>
+                  40+ kelime kartı
+                </Text>
               </View>
             </View>
           </View>
 
-          {/* Plans */}
-          <View style={styles.plansSection}>
+          {/* Lifetime Plan */}
+          <View style={styles.planSection}>
             <TouchableOpacity
-              style={styles.planCard}
-              onPress={() => handleSubscribe('monthly')}
+              style={styles.lifetimeCard}
+              onPress={handlePurchase}
+              disabled={isLoading}
+              activeOpacity={0.85}
             >
-              <View>
-                <Text style={styles.planName}>Aylık</Text>
-                <Text style={styles.planPrice}>₺79.99/ay</Text>
-              </View>
+              <LinearGradient
+                colors={[colors.accent, colors.accentLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.lifetimeGradient}
+              >
+                {isPurchasing ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <View style={styles.lifetimeHeader}>
+                      <Sparkles size={20} color={colors.primary} />
+                      <Text style={[styles.lifetimeLabel, { color: colors.primary }]}>
+                        Ömür Boyu Erişim
+                      </Text>
+                    </View>
+                    <Text style={[styles.lifetimePrice, { color: colors.primary }]}>
+                      ₺119,99
+                    </Text>
+                    <Text style={[styles.lifetimeSub, { color: colors.primary + 'BB' }]}>
+                      Tek seferlik ödeme · Sonsuza kadar erişim
+                    </Text>
+                  </>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.planCard, styles.planCardPopular]}
-              onPress={() => handleSubscribe('yearly')}
-            >
-              <View style={styles.popularBadge}>
-                <Text style={styles.popularBadgeText}>En Popüler</Text>
-              </View>
-              <View>
-                <Text style={[styles.planName, styles.planNamePopular]}>Yıllık</Text>
-                <Text style={[styles.planPrice, styles.planPricePopular]}>₺499.99/yıl</Text>
-                <Text style={styles.planSaving}>%48 tasarruf</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.planCard}
-              onPress={() => handleSubscribe('lifetime')}
-            >
-              <View>
-                <Text style={styles.planName}>Ömür Boyu</Text>
-                <Text style={styles.planPrice}>₺999.99</Text>
-                <Text style={styles.planSaving}>Tek seferlik ödeme</Text>
-              </View>
-            </TouchableOpacity>
+            <View style={styles.guaranteeRow}>
+              <Shield size={14} color={colors.success} />
+              <Text style={styles.guaranteeText}>
+                Abonelik yok · Gizli ücret yok · Anında erişim
+              </Text>
+            </View>
           </View>
 
+          {/* Error Message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
           {/* Restore */}
-          <TouchableOpacity style={styles.restoreButton} onPress={handleRestore}>
-            <Text style={styles.restoreText}>Satın Alımları Geri Yükle</Text>
+          <TouchableOpacity
+            style={styles.restoreButton}
+            onPress={handleRestore}
+            disabled={isLoading}
+          >
+            {isRestoring ? (
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+            ) : (
+              <Text style={styles.restoreText}>Satın Alımları Geri Yükle</Text>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.disclaimer}>
-            Abonelik süresince otomatik olarak yenilenir. İstediğiniz zaman App Store üzerinden iptal edebilirsiniz.
+            Ödeme, Apple ID hesabınızdan tahsil edilir. Satın alma işlemi onaylandıktan
+            sonra iade için Apple Destek ile iletişime geçebilirsiniz.
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -164,10 +229,10 @@ export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   closeButton: {
     position: 'absolute',
@@ -177,7 +242,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -194,7 +259,6 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.accent + '20',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -202,22 +266,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: Colors.text,
+    color: colors.text,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   featuresSection: {
     padding: 20,
-    gap: 12,
+    gap: 10,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 14,
     borderRadius: 12,
     gap: 12,
@@ -226,33 +290,39 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: Colors.accent + '15',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  featureText: {
+  featureTextWrap: {
     flex: 1,
+  },
+  featureText: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.text,
+    color: colors.text,
+  },
+  featureSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 1,
   },
   comparisonSection: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   comparisonCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   comparisonCardPremium: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accent + '08',
+    borderColor: colors.accent,
+    backgroundColor: colors.accent + '08',
   },
   premiumBadge: {
     flexDirection: 'row',
@@ -267,93 +337,100 @@ const styles = StyleSheet.create({
   premiumBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: Colors.primary,
   },
   comparisonTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 12,
   },
   comparisonTitlePremium: {
-    color: Colors.text,
+    color: colors.text,
   },
   comparisonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 8,
   },
   comparisonItemText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   comparisonItemTextPremium: {
-    color: Colors.text,
+    color: colors.text,
     fontWeight: '600',
   },
-  plansSection: {
+  planSection: {
     paddingHorizontal: 20,
-    gap: 10,
-  },
-  planCard: {
-    backgroundColor: Colors.surface,
-    padding: 18,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  planCardPopular: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accent + '08',
-  },
-  popularBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.accent,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 6,
     marginBottom: 8,
   },
-  popularBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.primary,
+  lifetimeCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  planName: {
+  lifetimeGradient: {
+    padding: 24,
+    alignItems: 'center',
+    borderRadius: 16,
+  },
+  lifetimeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  lifetimeLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.text,
   },
-  planNamePopular: {
-    color: Colors.text,
+  lifetimePrice: {
+    fontSize: 36,
+    fontWeight: '900',
+    marginBottom: 4,
   },
-  planPrice: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: Colors.primary,
-    marginTop: 4,
+  lifetimeSub: {
+    fontSize: 14,
+    fontWeight: '500',
   },
-  planPricePopular: {
-    color: Colors.accent,
+  guaranteeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
   },
-  planSaving: {
+  guaranteeText: {
     fontSize: 13,
-    color: Colors.success,
-    fontWeight: '600',
-    marginTop: 2,
+    color: colors.success,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: colors.error + '15',
+    borderRadius: 10,
+  },
+  errorText: {
+    fontSize: 13,
+    color: colors.error,
+    textAlign: 'center',
   },
   restoreButton: {
     alignSelf: 'center',
     paddingVertical: 14,
     paddingHorizontal: 20,
-    marginTop: 20,
+    marginTop: 16,
   },
   restoreText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textDecorationLine: 'underline',
   },
   disclaimer: {
     fontSize: 11,
-    color: Colors.textLight,
+    color: colors.textLight,
     textAlign: 'center',
     paddingHorizontal: 32,
     marginTop: 8,

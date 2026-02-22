@@ -8,6 +8,7 @@ import { useSpacedRepetitionStore } from '@/stores/spacedRepetitionStore';
 import { useAnalyticsStore } from '@/stores/analyticsStore';
 import { useAchievementStore } from '@/stores/achievementStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
+import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
 import { calculateXP } from '@/utils/xpSystem';
 
 const STATS_KEY = 'yds_user_stats';
@@ -134,6 +135,10 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
       const reviewData = useSpacedRepetitionStore.getState().reviewData;
       useAchievementStore.getState().checkAndUnlock(updated, bookmarkCount, reviewData);
 
+      // Update personal records
+      const dailyRecords = useAnalyticsStore.getState().dailyRecords;
+      usePersonalRecordsStore.getState().updateRecords(updated, dailyRecords);
+
       saveStatsMutation.mutate(updated);
       return updated;
     });
@@ -152,6 +157,11 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
       const examHistory = [result, ...prev.examHistory].slice(0, MAX_EXAM_HISTORY);
       const updated: UserStats = { ...prev, examHistory };
       saveStatsMutation.mutate(updated);
+
+      // Update personal records
+      const dailyRecords = useAnalyticsStore.getState().dailyRecords;
+      usePersonalRecordsStore.getState().updateRecords(updated, dailyRecords);
+
       return updated;
     });
   }, [saveStatsMutation]);
