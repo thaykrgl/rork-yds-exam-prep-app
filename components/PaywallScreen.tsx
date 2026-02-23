@@ -32,7 +32,7 @@ const features = [
 
 export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) {
   const colors = useColors();
-  const { purchaseLifetime, restore, isPurchasing, isRestoring } = usePremiumStore();
+  const { purchaseLifetime, restore, isPurchasing, isRestoring, lifetimePrice } = usePremiumStore();
   const [error, setError] = useState<string | null>(null);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -181,7 +181,7 @@ export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) 
                       </Text>
                     </View>
                     <Text style={[styles.lifetimePrice, { color: colors.primary }]}>
-                      ₺119,99
+                      {lifetimePrice}
                     </Text>
                     <Text style={[styles.lifetimeSub, { color: colors.primary + 'BB' }]}>
                       Tek seferlik ödeme · Sonsuza kadar erişim
