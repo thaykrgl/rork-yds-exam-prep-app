@@ -118,6 +118,22 @@ export default function ProfileScreen() {
     await updatePreferences({ milestoneNotifications: newState });
   };
 
+  const handleToggleWordOfTheDay = async () => {
+    const newState = !preferences.wordOfTheDay;
+    if (newState) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        Alert.alert(
+          'Bildirim İzni',
+          'Günün kelimesi bildirimlerini etkinleştirmek için ayarlardan bildirim izni vermeniz gerekmektedir.',
+          [{ text: 'Tamam' }]
+        );
+        return;
+      }
+    }
+    await updatePreferences({ wordOfTheDay: newState });
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
@@ -322,6 +338,20 @@ export default function ProfileScreen() {
             </View>
             <View style={[styles.notifToggle, preferences.milestoneNotifications && styles.notifToggleActive]}>
               <View style={[styles.notifToggleDot, preferences.milestoneNotifications && styles.notifToggleDotActive]} />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.notifRow}
+            onPress={handleToggleWordOfTheDay}
+          >
+            <BookOpen size={18} color={preferences.wordOfTheDay ? colors.primary : colors.textLight} />
+            <View style={styles.notifInfo}>
+              <Text style={styles.notifTitle}>Günün Kelimesi</Text>
+              <Text style={styles.notifSub}>Her gün yeni bir kelime öğren</Text>
+            </View>
+            <View style={[styles.notifToggle, preferences.wordOfTheDay && styles.notifToggleActive]}>
+              <View style={[styles.notifToggleDot, preferences.wordOfTheDay && styles.notifToggleDotActive]} />
             </View>
           </TouchableOpacity>
         </View>

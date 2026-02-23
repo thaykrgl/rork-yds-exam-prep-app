@@ -2,11 +2,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NotificationPreferences } from '@/types';
-import { 
-  scheduleDailyReminder, 
-  cancelDailyReminder, 
-  scheduleStreakReminder, 
-  cancelStreakReminder 
+import {
+  scheduleDailyReminder,
+  cancelDailyReminder,
+  scheduleStreakReminder,
+  cancelStreakReminder,
+  scheduleWordOfTheDay,
+  cancelWordOfTheDay,
 } from '@/utils/notifications';
 
 interface NotificationStore {
@@ -23,6 +25,8 @@ export const useNotificationStore = create<NotificationStore>()(
         dailyReminderTime: '09:00',
         streakReminder: false,
         milestoneNotifications: true,
+        wordOfTheDay: false,
+        wordOfTheDayTime: '08:00',
       },
 
       updatePreferences: async (prefs) => {
@@ -49,6 +53,15 @@ export const useNotificationStore = create<NotificationStore>()(
           await scheduleStreakReminder();
         } else {
           await cancelStreakReminder();
+        }
+
+        // Handle word of the day
+        if (preferences.wordOfTheDay) {
+          const wotdTime = preferences.wordOfTheDayTime || '08:00';
+          const [wHour, wMinute] = wotdTime.split(':').map(Number);
+          await scheduleWordOfTheDay(wHour, wMinute);
+        } else {
+          await cancelWordOfTheDay();
         }
       },
     }),

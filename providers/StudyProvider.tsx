@@ -69,7 +69,20 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
     queryKey: ['vocabCards'],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(VOCAB_KEY);
-      return stored ? (JSON.parse(stored) as VocabularyCard[]) : initialVocab;
+      if (!stored) return initialVocab;
+
+      const savedCards = JSON.parse(stored) as VocabularyCard[];
+      // Merge: preserve user's mastered state, add any new cards from initialVocab
+      if (savedCards.length < initialVocab.length) {
+        const savedMap = new Map(savedCards.map(c => [c.id, c]));
+        const merged = initialVocab.map(card => {
+          const saved = savedMap.get(card.id);
+          return saved ? { ...card, mastered: saved.mastered } : card;
+        });
+        await AsyncStorage.setItem(VOCAB_KEY, JSON.stringify(merged));
+        return merged;
+      }
+      return savedCards;
     },
   });
 

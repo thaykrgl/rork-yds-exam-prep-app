@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, FlatList, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, X, RotateCcw, Star } from 'lucide-react-native';
+import { Check, X, RotateCcw, Star, Sparkles, Gamepad2, Search } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Lock, Crown } from 'lucide-react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePremiumStore } from '@/stores/premiumStore';
@@ -16,16 +16,27 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 48;
 
 type FilterType = 'all' | 'learning' | 'mastered';
+type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced';
 
 const FREE_CARD_LIMIT = 20;
+
+function getDayOfYear(): number {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now.getTime() - start.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
 
 export default function VocabularyScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const router = useRouter();
   const params = useLocalSearchParams<{ initialFilter?: FilterType }>();
   const { vocabCards, toggleMastered } = useStudy();
   const isPremium = usePremiumStore(s => s.tier === 'premium');
   const [filter, setFilter] = useState<FilterType>(params.initialFilter || 'all');
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -38,13 +49,25 @@ export default function VocabularyScreen() {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const filteredCards = vocabCards.filter(card => {
-    if (filter === 'learning') return !card.mastered;
-    if (filter === 'mastered') return card.mastered;
+  const filteredCards = useMemo(() => vocabCards.filter(card => {
+    if (filter === 'learning' && card.mastered) return false;
+    if (filter === 'mastered' && !card.mastered) return false;
+    if (levelFilter !== 'all' && card.level !== levelFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      return card.word.toLowerCase().includes(q) || card.meaning.toLowerCase().includes(q);
+    }
     return true;
-  });
+  }), [vocabCards, filter, levelFilter, searchQuery]);
 
   const masteredCount = vocabCards.filter(c => c.mastered).length;
+
+  // Word of the Day
+  const wordOfTheDay = useMemo(() => {
+    if (vocabCards.length === 0) return null;
+    const dayIndex = getDayOfYear() % vocabCards.length;
+    return vocabCards[dayIndex];
+  }, [vocabCards]);
 
   const handleFlip = useCallback((cardId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -65,7 +88,7 @@ export default function VocabularyScreen() {
   }, [toggleMastered]);
 
   const renderCard = useCallback(({ item, index }: { item: VocabularyCard; index: number }) => {
-    const isFlipped = flippedCards.has(item.id);
+    const isExpanded = flippedCards.has(item.id);
     const isLocked = !isPremium && index >= FREE_CARD_LIMIT;
 
     if (isLocked) {
@@ -77,10 +100,9 @@ export default function VocabularyScreen() {
           testID={`vocab-card-locked-${item.id}`}
         >
           <View style={[styles.cardInner, styles.cardLocked]}>
-            <View style={styles.cardFront}>
-              <Lock size={28} color={colors.locked} />
+            <View style={styles.cardRow}>
+              <Lock size={18} color={colors.locked} />
               <Text style={styles.lockedText}>Premium ile Aç</Text>
-              <Text style={styles.lockedHint}>Bu karta erişmek için premium'a geç</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -90,46 +112,51 @@ export default function VocabularyScreen() {
     return (
       <TouchableOpacity
         style={styles.card}
-        activeOpacity={0.9}
+        activeOpacity={0.8}
         onPress={() => handleFlip(item.id)}
         testID={`vocab-card-${item.id}`}
       >
         <View style={[styles.cardInner, item.mastered && styles.cardMastered]}>
-          {!isFlipped ? (
-            <View style={styles.cardFront}>
-              <View style={styles.cardTopRow}>
-                <View style={[styles.levelBadge, { backgroundColor: getLevelColor(item.level) + '20' }]}>
-                  <Text style={[styles.levelText, { color: getLevelColor(item.level) }]}>{getLevelLabel(item.level)}</Text>
-                </View>
-                {item.mastered && <Star color={colors.accent} size={18} fill={colors.accent} />}
+          {/* Compact Row: Word + Meaning */}
+          <View style={styles.cardRow}>
+            <View style={styles.cardMainInfo}>
+              <View style={styles.cardWordRow}>
+                <Text style={styles.wordText} numberOfLines={1}>{item.word}</Text>
+                <View style={[styles.levelDot, { backgroundColor: getLevelColor(item.level) }]} />
+                {item.mastered && <Star color={colors.accent} size={14} fill={colors.accent} />}
               </View>
-              <Text style={styles.wordText}>{item.word}</Text>
-              <Text style={styles.flipHint}>Çevirmek için dokun</Text>
+              <Text style={styles.meaningText} numberOfLines={1}>{item.meaning}</Text>
             </View>
-          ) : (
-            <View style={styles.cardBack}>
-              <Text style={styles.meaningText}>{item.meaning}</Text>
-              <View style={{ flex: 1 }} />
+          </View>
+
+          {/* Expanded: Example + Master Button */}
+          {isExpanded && (
+            <View style={styles.cardExpanded}>
               <View style={styles.exampleBox}>
                 <Text style={styles.exampleText}>"{item.example}"</Text>
               </View>
-              <TouchableOpacity
-                style={[styles.masterButton, item.mastered && styles.masterButtonActive]}
-                onPress={() => handleToggleMastered(item.id)}
-                activeOpacity={0.7}
-              >
-                {item.mastered ? (
-                  <>
-                    <RotateCcw color={colors.textSecondary} size={16} />
-                    <Text style={styles.masterButtonTextInactive}>Tekrar öğren</Text>
-                  </>
-                ) : (
-                  <>
-                    <Check color="#FFFFFF" size={16} />
-                    <Text style={styles.masterButtonText}>Öğrendim</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              <View style={styles.cardExpandedRow}>
+                <View style={[styles.levelBadge, { backgroundColor: getLevelColor(item.level) + '20' }]}>
+                  <Text style={[styles.levelText, { color: getLevelColor(item.level) }]}>{getLevelLabel(item.level)}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.masterButton, item.mastered && styles.masterButtonActive]}
+                  onPress={() => handleToggleMastered(item.id)}
+                  activeOpacity={0.7}
+                >
+                  {item.mastered ? (
+                    <>
+                      <RotateCcw color={colors.textSecondary} size={14} />
+                      <Text style={styles.masterButtonTextInactive}>Tekrar öğren</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Check color="#FFFFFF" size={14} />
+                      <Text style={styles.masterButtonText}>Öğrendim</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </View>
@@ -148,6 +175,25 @@ export default function VocabularyScreen() {
         </View>
       </LinearGradient>
 
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Search size={16} color={colors.textLight} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Kelime veya anlam ara..."
+          placeholderTextColor={colors.textLight}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCorrect={false}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <X size={16} color={colors.textLight} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Filters */}
       <View style={styles.filterRow}>
         {(['all', 'learning', 'mastered'] as FilterType[]).map(f => (
           <TouchableOpacity
@@ -161,6 +207,23 @@ export default function VocabularyScreen() {
             </Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      {/* Level Filters */}
+      <View style={styles.levelFilterRow}>
+        {(['all', 'beginner', 'intermediate', 'advanced'] as LevelFilter[]).map(l => (
+          <TouchableOpacity
+            key={l}
+            style={[styles.levelChip, levelFilter === l && { backgroundColor: l === 'all' ? colors.primary : getLevelColor(l), borderColor: l === 'all' ? colors.primary : getLevelColor(l) }]}
+            onPress={() => setLevelFilter(l)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.levelChipText, levelFilter === l && styles.levelChipTextActive]}>
+              {l === 'all' ? 'Hepsi' : l === 'beginner' ? 'Başlangıç' : l === 'intermediate' ? 'Orta' : 'İleri'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        <Text style={styles.cardCount}>{filteredCards.length} kelime</Text>
       </View>
 
       {/* Premium Banner for free users */}
@@ -187,6 +250,50 @@ export default function VocabularyScreen() {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              {/* Word of the Day */}
+              {wordOfTheDay && filter === 'all' && (
+                <TouchableOpacity
+                  style={styles.wotdCard}
+                  activeOpacity={0.9}
+                  onPress={() => handleFlip(wordOfTheDay.id)}
+                >
+                  <LinearGradient
+                    colors={[colors.primary, colors.primaryLight]}
+                    style={styles.wotdGradient}
+                  >
+                    <View style={styles.wotdHeader}>
+                      <Sparkles size={16} color="#FFFFFF" />
+                      <Text style={styles.wotdLabel}>Günün Kelimesi</Text>
+                    </View>
+                    <Text style={styles.wotdWord}>{wordOfTheDay.word}</Text>
+                    <Text style={styles.wotdMeaning}>{wordOfTheDay.meaning}</Text>
+                    <View style={styles.wotdExampleBox}>
+                      <Text style={styles.wotdExample}>"{wordOfTheDay.example}"</Text>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+
+              {/* Word Match Game Button */}
+              {filter === 'all' && (
+                <TouchableOpacity
+                  style={styles.gameCard}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/word-match' as any)}
+                >
+                  <View style={[styles.gameIcon, { backgroundColor: colors.primary + '15' }]}>
+                    <Gamepad2 size={22} color={colors.primary} />
+                  </View>
+                  <View style={styles.gameInfo}>
+                    <Text style={styles.gameTitle}>Kelime Eşleştirme</Text>
+                    <Text style={styles.gameSub}>Kelime-anlam eşleştirerek öğren</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </>
+          }
         />
       )}
 
@@ -243,15 +350,35 @@ const createStyles = (colors: any) => StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    padding: 0,
+  },
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 12,
+    paddingBottom: 4,
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -262,44 +389,89 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.primary,
   },
   filterText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600' as const,
     color: colors.textSecondary,
   },
   filterTextActive: {
     color: '#FFFFFF',
   },
-  listContent: {
+  levelFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 10,
+    gap: 6,
+  },
+  levelChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  levelChipText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+  },
+  levelChipTextActive: {
+    color: '#FFFFFF',
+  },
+  cardCount: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: colors.textLight,
+    marginLeft: 'auto',
+  },
+  listContent: {
+    paddingHorizontal: 16,
     paddingBottom: 30,
   },
   card: {
-    marginBottom: 12,
+    marginBottom: 6,
   },
   cardInner: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    borderLeftWidth: 4,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderLeftWidth: 3,
     borderLeftColor: colors.primaryLight,
   },
   cardMastered: {
     borderLeftColor: colors.accent,
   },
-  cardFront: {
+  cardRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 120,
-    justifyContent: 'center',
   },
-  cardBack: {
-    minHeight: 120,
+  cardMainInfo: {
+    flex: 1,
   },
-  cardTopRow: {
+  cardWordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  levelDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  cardExpanded: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  cardExpandedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 12,
   },
   levelBadge: {
     paddingHorizontal: 10,
@@ -311,41 +483,35 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontWeight: '600' as const,
   },
   wordText: {
-    fontSize: 26,
+    fontSize: 16,
     fontWeight: '700' as const,
     color: colors.text,
-    marginBottom: 8,
-  },
-  flipHint: {
-    fontSize: 12,
-    color: colors.textLight,
   },
   meaningText: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    color: colors.primary,
-    marginBottom: 12,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   exampleBox: {
     backgroundColor: colors.background,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 14,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
   },
   exampleText: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textSecondary,
     fontStyle: 'italic' as const,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   masterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: colors.success,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
   },
   masterButtonActive: {
     backgroundColor: colors.surfaceAlt,
@@ -353,27 +519,22 @@ const createStyles = (colors: any) => StyleSheet.create({
   masterButtonText: {
     color: '#FFFFFF',
     fontWeight: '600' as const,
-    fontSize: 14,
+    fontSize: 12,
   },
   masterButtonTextInactive: {
     color: colors.textSecondary,
     fontWeight: '600' as const,
-    fontSize: 14,
+    fontSize: 12,
   },
   cardLocked: {
     borderLeftColor: colors.locked,
     backgroundColor: colors.surfaceAlt,
   },
   lockedText: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600' as const,
     color: colors.locked,
-    marginTop: 8,
-  },
-  lockedHint: {
-    fontSize: 12,
-    color: colors.textLight,
-    marginTop: 4,
+    marginLeft: 8,
   },
   premiumBanner: {
     flexDirection: 'row',
@@ -393,6 +554,82 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '600' as const,
     color: colors.accent,
+  },
+  // Word of the Day
+  wotdCard: {
+    marginBottom: 14,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  wotdGradient: {
+    padding: 18,
+    borderRadius: 16,
+  },
+  wotdHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  wotdLabel: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: 'rgba(255,255,255,0.85)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+  },
+  wotdWord: {
+    fontSize: 28,
+    fontWeight: '800' as const,
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  wotdMeaning: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 12,
+  },
+  wotdExampleBox: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 10,
+    padding: 10,
+  },
+  wotdExample: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    fontStyle: 'italic' as const,
+    lineHeight: 19,
+  },
+  // Game Card
+  gameCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
+    gap: 12,
+  },
+  gameIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gameInfo: {
+    flex: 1,
+  },
+  gameTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: colors.text,
+    marginBottom: 2,
+  },
+  gameSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
   },
   emptyState: {
     flex: 1,

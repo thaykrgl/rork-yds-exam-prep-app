@@ -124,6 +124,44 @@ export async function sendMilestoneNotification(title: string, body: string): Pr
 }
 
 /**
+ * Schedule a daily Word of the Day notification
+ */
+export async function scheduleWordOfTheDay(hour: number, minute: number): Promise<string | null> {
+  const granted = await requestNotificationPermissions();
+  if (!granted) return null;
+
+  await cancelWordOfTheDay();
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📖 Günün Kelimesi',
+      body: 'Bugünün kelimesini öğrenmek için uygulamayı aç!',
+      data: { type: 'word_of_the_day' },
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+    },
+  });
+
+  return id;
+}
+
+/**
+ * Cancel all Word of the Day notifications
+ */
+export async function cancelWordOfTheDay(): Promise<void> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const notif of scheduled) {
+    if (notif.content.data?.type === 'word_of_the_day') {
+      await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+    }
+  }
+}
+
+/**
  * Cancel all scheduled notifications
  */
 export async function cancelAllNotifications(): Promise<void> {

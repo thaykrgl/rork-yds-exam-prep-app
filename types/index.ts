@@ -177,6 +177,8 @@ export interface NotificationPreferences {
   dailyReminderTime: string;
   streakReminder: boolean;
   milestoneNotifications: boolean;
+  wordOfTheDay: boolean;
+  wordOfTheDayTime: string;
 }
 
 export type PremiumTier = 'free' | 'premium';
