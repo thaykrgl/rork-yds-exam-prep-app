@@ -10,13 +10,13 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Trophy, Clock, Target, Home, RotateCcw, ChevronDown, ChevronUp, Share2 } from 'lucide-react-native';
+import { Trophy, Clock, Target, Home, RotateCcw, ChevronDown, ChevronUp, Share2, TrendingUp, Zap } from 'lucide-react-native';
 import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
 import { shareTextResult, generateShareMessage } from '@/utils/sharing';
 import { useStudy } from '@/providers/StudyProvider';
 import { questions as allQuestions } from '@/mocks/questions';
-import { formatDuration } from '@/utils/examUtils';
+import { formatDuration, getYDSLevel, getYDSScoreColor } from '@/utils/examUtils';
 import { ExamResult, CategoryBreakdown } from '@/types';
 import ProgressBar from '@/components/ProgressBar';
 
@@ -69,6 +69,10 @@ export default function ExamResultScreen() {
   const isGoodScore = percentage >= 70;
   const modeLabel = result.config.mode === 'full' ? 'Tam Simülasyon' : 'Mini Sınav';
 
+  const ydsScore = result.estimatedYDSScore;
+  const { level: ydsLevel, message: ydsMessage } = getYDSLevel(ydsScore);
+  const ydsColor = getYDSScoreColor(ydsScore);
+
   const handleRetry = () => {
     const examConfigJson = JSON.stringify(result.config);
     router.replace({ pathname: '/exam' as any, params: { examConfigJson } });
@@ -78,6 +82,9 @@ export default function ExamResultScreen() {
     const msg = generateShareMessage(result.score, result.totalQuestions, modeLabel);
     await shareTextResult('YDS Başarısı!', msg);
   };
+
+  // Calculate ring progress for SVG-like circle (using View borders)
+  const ringProgress = Math.min(ydsScore / 100, 1);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -116,21 +123,53 @@ export default function ExamResultScreen() {
             </View>
           </View>
 
-          {/* Stats Row */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Target size={18} color={colors.accent} />
-              <Text style={styles.statLabel}>Tahmini YDS</Text>
-              <Text style={styles.statValue}>{result.estimatedYDSScore}</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Clock size={18} color={colors.accent} />
-              <Text style={styles.statLabel}>Süre</Text>
-              <Text style={styles.statValue}>{formatDuration(result.timeSpentSeconds)}</Text>
-            </View>
+          {/* Time */}
+          <View style={styles.timeRow}>
+            <Clock size={16} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.timeText}>{formatDuration(result.timeSpentSeconds)}</Text>
           </View>
         </LinearGradient>
+
+        {/* YDS Score Card */}
+        <View style={styles.section}>
+          <View style={styles.ydsCard}>
+            <View style={styles.ydsCardHeader}>
+              <Target size={20} color={ydsColor} />
+              <Text style={styles.ydsCardTitle}>Tahmini YDS Puanı</Text>
+            </View>
+
+            {/* Circular Score Display */}
+            <View style={styles.ydsScoreContainer}>
+              <View style={[styles.ydsRingOuter, { borderColor: ydsColor + '25' }]}>
+                <View style={[styles.ydsRingProgress, { borderColor: ydsColor, borderTopColor: ringProgress >= 0.25 ? ydsColor : 'transparent', borderRightColor: ringProgress >= 0.5 ? ydsColor : 'transparent', borderBottomColor: ringProgress >= 0.75 ? ydsColor : 'transparent' }]}>
+                  <View style={[styles.ydsRingInner, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.ydsScoreNumber, { color: ydsColor }]}>{ydsScore}</Text>
+                    <Text style={styles.ydsScoreLabel}>puan</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Level Badge */}
+            <View style={[styles.ydsLevelBadge, { backgroundColor: ydsColor + '15' }]}>
+              <TrendingUp size={16} color={ydsColor} />
+              <Text style={[styles.ydsLevelText, { color: ydsColor }]}>{ydsLevel}</Text>
+            </View>
+
+            {/* Motivational Message */}
+            <Text style={styles.ydsMessage}>{ydsMessage}</Text>
+
+            {/* Score Details */}
+            <View style={styles.ydsDetailsRow}>
+              <View style={styles.ydsDetailItem}>
+                <Zap size={14} color={colors.textLight} />
+                <Text style={styles.ydsDetailText}>
+                  Ham puan: %{percentage}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
 
         {/* Category Breakdown */}
         <View style={styles.section}>
@@ -316,7 +355,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   scoreBig: {
     flexDirection: 'row',
@@ -347,32 +386,113 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
   },
-  statsRow: {
+  timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 14,
-    padding: 16,
+    gap: 6,
+  },
+  timeText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
+  },
+  // YDS Score Card
+  ydsCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+  },
+  ydsCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  ydsCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  ydsScoreContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  ydsRingOuter: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ydsRingProgress: {
+    width: 124,
+    height: 124,
+    borderRadius: 62,
+    borderWidth: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ydsRingInner: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ydsScoreNumber: {
+    fontSize: 40,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  ydsScoreLabel: {
+    fontSize: 12,
+    color: colors.textLight,
+    fontWeight: '600',
+    marginTop: -2,
+  },
+  ydsLevelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 10,
+  },
+  ydsLevelText: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  ydsMessage: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 19,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+  ydsDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
     width: '100%',
   },
-  statItem: {
-    flex: 1,
+  ydsDetailItem: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  statLabel: {
+  ydsDetailText: {
     fontSize: 12,
-    color: colors.headerSubtitle,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  statDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    color: colors.textLight,
+    fontWeight: '500',
   },
   section: {
     padding: 20,

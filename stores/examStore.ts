@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ExamAnswer, ExamConfig, ExamResult, CategoryBreakdown, Question, QuestionCategory } from '@/types';
+import { calculateEstimatedYDSScore } from '@/utils/examUtils';
 
 interface ExamStore {
   isActive: boolean;
@@ -129,8 +130,9 @@ export const useExamStore = create<ExamStore>((set, get) => ({
 
     const timeSpentSeconds = startTime ? Math.round((Date.now() - startTime) / 1000) : state.elapsedSeconds;
 
-    // Estimated YDS score (simplified: percentage-based, 0-100)
-    const estimatedYDSScore = Math.round((score / questions.length) * 100);
+    // Estimated YDS score (difficulty-weighted with category balance)
+    const ydsResult = calculateEstimatedYDSScore(questions, answers, categoryBreakdown);
+    const estimatedYDSScore = ydsResult.score;
 
     const result: ExamResult = {
       id: `exam_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
