@@ -15,14 +15,21 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.yds-exam-prep-app"
+      "bundleIdentifier": "app.rork.yds-exam-prep-app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Lütfen kamera erişimine izin verin.",
+        "NSPhotoLibraryUsageDescription": "Profil fotoğrafı yüklemek için galeri erişimine izin verin.",
+        "NSLocationWhenInUseUsageDescription": "Bölgesel ayarlar için konumunuza erişim gereklidir."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.yds_exam_prep_app"
+      "package": "app.rork.yds_exam_prep_app",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -36,7 +43,20 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Profil fotoğrafı yüklemek için galeri erişimine izin verin.",
+          "cameraPermission": "Lütfen kamera erişimine izin verin."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Bölgesel ayarlar için konumunuza erişim gereklidir."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

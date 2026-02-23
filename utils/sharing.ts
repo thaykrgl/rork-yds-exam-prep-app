@@ -13,6 +13,7 @@ export async function shareTextResult(title: string, message: string) {
       // Create a temporary file to share if needed, or just share simple message
       // Note: On some platforms Sharing only works with files
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        // @ts-ignore
         const fileUri = `${FileSystem.cacheDirectory}result.txt`;
         await FileSystem.writeAsStringAsync(fileUri, `${title}\n\n${message}`);
         await Sharing.shareAsync(fileUri);

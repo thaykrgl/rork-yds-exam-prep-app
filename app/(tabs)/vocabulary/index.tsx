@@ -2,11 +2,12 @@ import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, FlatList, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, X, RotateCcw, Star, Sparkles, Gamepad2, Search } from 'lucide-react-native';
+import { Check, X, RotateCcw, Star, Sparkles, Gamepad2, Search, Moon, Sun } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Lock, Crown } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
+import { useThemeStore } from '@/stores/themeStore';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePremiumStore } from '@/stores/premiumStore';
 import PaywallScreen from '@/components/PaywallScreen';
@@ -30,6 +31,7 @@ function getDayOfYear(): number {
 export default function VocabularyScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { mode, toggleTheme } = useThemeStore();
   const router = useRouter();
   const params = useLocalSearchParams<{ initialFilter?: FilterType }>();
   const { vocabCards, toggleMastered } = useStudy();
@@ -167,8 +169,19 @@ export default function VocabularyScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.headerTitle}>Kelime Kartları</Text>
-        <Text style={styles.headerSubtitle}>{masteredCount}/{vocabCards.length} kelime öğrenildi</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>Kelime Kartları</Text>
+            <Text style={styles.headerSubtitle}>{masteredCount}/{vocabCards.length} kelime öğrenildi</Text>
+          </View>
+          <TouchableOpacity
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            {mode === 'dark' ? <Sun size={20} color="#FFFFFF" /> : <Moon size={20} color="#FFFFFF" />}
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.progressBarContainer}>
           <View style={[styles.progressBarFill, { width: `${(masteredCount / (vocabCards.length || 1)) * 100}%`, backgroundColor: colors.accent }]} />

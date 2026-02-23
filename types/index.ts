@@ -208,7 +208,17 @@ export type GrammarTopicId =
   | 'comparatives'
   | 'wish_would_rather'
   | 'cleft_sentences'
-  | 'modals';
+  | 'modals'
+  | 'reported_speech'
+  | 'articles_determiners'
+  | 'prepositions'
+  | 'noun_clauses'
+  | 'adverbial_clauses'
+  | 'quantifiers'
+  | 'word_formation'
+  | 'emphatic_structures'
+  | 'ellipsis_substitution'
+  | 'parallel_structure';
 
 export type GrammarDifficulty = 'beginner' | 'intermediate' | 'advanced';
 export type GrammarTheme = 'sentence_structure' | 'verb_forms' | 'clauses' | 'special_structures';

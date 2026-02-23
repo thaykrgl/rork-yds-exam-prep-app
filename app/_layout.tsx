@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StudyProvider } from "@/providers/StudyProvider";
 import { usePremiumStore } from "@/stores/premiumStore";
 import { useAnalyticsStore } from "@/stores/analyticsStore";
@@ -18,6 +19,9 @@ import { StatusBar } from "expo-status-bar";
 import { useRouter, useSegments } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
+
+// ⚠️ ONE-TIME RESET — Remove this block after testing!
+AsyncStorage.clear().then(() => console.log('✅ All app data has been reset!'));
 
 const queryClient = new QueryClient();
 

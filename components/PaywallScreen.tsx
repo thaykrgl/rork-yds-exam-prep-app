@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -223,6 +224,16 @@ export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) 
             Ödeme, Apple ID hesabınızdan tahsil edilir. Satın alma işlemi onaylandıktan
             sonra iade için Apple Destek ile iletişime geçebilirsiniz.
           </Text>
+
+          <View style={styles.legalLinksContainer}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://rork.com/privacy-policy')}>
+              <Text style={styles.legalLink}>Gizlilik Politikası</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalLinksDivider}>•</Text>
+            <TouchableOpacity onPress={() => Linking.openURL('https://rork.com/terms')}>
+              <Text style={styles.legalLink}>Kullanım Koşulları</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -435,5 +446,21 @@ const createStyles = (colors: any) => StyleSheet.create({
     paddingHorizontal: 32,
     marginTop: 8,
     lineHeight: 16,
+  },
+  legalLinksContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 12,
+  },
+  legalLink: {
+    fontSize: 12,
+    color: colors.accent,
+    textDecorationLine: 'underline',
+  },
+  legalLinksDivider: {
+    color: colors.textLight,
+    fontSize: 12,
   },
 });

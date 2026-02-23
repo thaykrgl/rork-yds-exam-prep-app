@@ -13,6 +13,7 @@ import { passages } from '@/mocks/passages';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePremiumStore } from '@/stores/premiumStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
+import PaywallScreen from '@/components/PaywallScreen';
 import { Question, QuestionCategory, ReadingQuestion } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -49,6 +50,7 @@ export default function QuizScreen() {
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const { shakeAnim, flashOpacity, flashColor, showConfetti, triggerFeedback, dismissConfetti } = useAnswerFeedback();
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -63,7 +65,7 @@ export default function QuizScreen() {
     // Premium daily question limit check
     const canAnswer = usePremiumStore.getState().consumeQuestion();
     if (!canAnswer) {
-      // Will be handled by PaywallScreen in the UI layer
+      setShowPaywall(true);
       return;
     }
 
@@ -284,6 +286,7 @@ export default function QuizScreen() {
       )}
 
       <ConfettiOverlay visible={showConfetti} onComplete={dismissConfetti} />
+      <PaywallScreen visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </View>
   );
 }

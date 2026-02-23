@@ -3,14 +3,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, Newspaper, ChevronRight, Trophy, Clock, RefreshCw, Calendar, CheckCircle, Moon, Sun, Settings2 } from 'lucide-react-native';
+import { Flame, Target, TrendingUp, BookOpen, PenTool, FileText, Languages, Puzzle, Newspaper, ChevronRight, Trophy, Clock, Calendar, CheckCircle, Moon, Sun, Settings2 } from 'lucide-react-native';
 import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
 import { useStudy } from '@/providers/StudyProvider';
 import { studyCategories } from '@/mocks/questions';
 import { useAchievementStore } from '@/stores/achievementStore';
 import { useNotificationStore } from '@/stores/notificationStore';
-import { useSpacedRepetitionStore } from '@/stores/spacedRepetitionStore';
+
 import { useStudyPlanStore } from '@/stores/studyPlanStore';
 import { formatDuration } from '@/utils/examUtils';
 import { QuestionCategory } from '@/types';
@@ -21,7 +21,7 @@ export default function HomeScreen() {
   const colors = useColors();
   const { mode, toggleTheme } = useThemeStore();
   const { stats, updateDailyGoal } = useStudy();
-  const dueCount = useSpacedRepetitionStore((s) => s.getDueCount());
+
   const unlockedBadgesCount = useAchievementStore((s) => s.unlockedBadges.length);
   const { activePlan, getTodaysTasks, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
   const todaysTasks = getTodaysTasks();
@@ -137,25 +137,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Daily Review */}
-        {dueCount > 0 && (
-          <TouchableOpacity
-            style={styles.reviewCard}
-            activeOpacity={0.7}
-            onPress={() => router.push('/daily-review' as any)}
-          >
-            <View style={styles.reviewCardLeft}>
-              <View style={styles.reviewCardIcon}>
-                <RefreshCw size={20} color="#14B8A6" />
-              </View>
-              <View>
-                <Text style={styles.reviewCardTitle}>Günlük Tekrar</Text>
-                <Text style={styles.reviewCardSub}>{dueCount} soru tekrar bekliyor</Text>
-              </View>
-            </View>
-            <ChevronRight size={18} color={colors.textLight} />
-          </TouchableOpacity>
-        )}
+
 
         {/* Active Study Plan Tasks */}
         {activePlan && todaysTasks.length > 0 && (

@@ -6,7 +6,9 @@ import { useRouter } from 'expo-router';
 import {
   BookOpen, Search, ChevronRight, CheckCircle, GitBranch, Link,
   ArrowDownUp, MessageSquare, Clock, Users, FileText, Repeat,
-  Volume2, ArrowRightLeft, Puzzle, PenTool, Star, Layers
+  Volume2, ArrowRightLeft, Puzzle, PenTool, Star, Layers,
+  Type, Navigation, AlignLeft, Hash, Bold, Scissors, Columns,
+  ToggleLeft, RefreshCw, Scale, Sparkles, Focus, Key, Settings
 } from 'lucide-react-native';
 import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
@@ -17,6 +19,9 @@ import { GrammarTheme, GrammarDifficulty, GrammarTopic } from '@/types';
 const iconMap: Record<string, React.ComponentType<{ color: string; size: number }>> = {
   GitBranch, Link, ArrowDownUp, MessageSquare, Clock, Users,
   FileText, Repeat, Volume2, ArrowRightLeft, Puzzle, PenTool, Star, Layers, BookOpen,
+  ToggleLeft, RefreshCw, Scale, Sparkles, Focus, Key, Settings,
+  Type, Navigation, AlignLeft, Hash, Bold, Scissors, Columns,
+  CheckCheck: CheckCircle,
 };
 
 const themeLabels: Record<GrammarTheme, string> = {

@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Play, BookOpen, PenTool, FileText, Languages, Puzzle, Shuffle, Clock, Zap, Timer, Newspaper, Bookmark, Calendar, ChevronRight, Library } from 'lucide-react-native';
+import { Play, BookOpen, PenTool, FileText, Languages, Puzzle, Shuffle, Clock, Zap, Timer, Newspaper, Bookmark, Calendar, ChevronRight, Library, Moon, Sun } from 'lucide-react-native';
 import { useColors } from '@/hooks/useColors';
+import { useThemeStore } from '@/stores/themeStore';
 import { studyCategories, questions } from '@/mocks/questions';
 import { useStudy } from '@/providers/StudyProvider';
 import { usePremiumStore } from '@/stores/premiumStore';
@@ -28,6 +29,7 @@ export default function PracticeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const colors = useColors();
+  const { mode, toggleTheme } = useThemeStore();
   const { stats } = useStudy();
   const bookmarkCount = useBookmarkStore((s) => s.getBookmarkCount());
   const { activePlan, getPlanProgress, getActivePlanDef } = useStudyPlanStore();
@@ -74,8 +76,19 @@ export default function PracticeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient colors={[colors.primary, colors.primaryLight]} style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.headerTitle}>Pratik Yap</Text>
-        <Text style={styles.headerSubtitle}>Kategori seç ve soru çözmeye başla</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View>
+            <Text style={styles.headerTitle}>Pratik Yap</Text>
+            <Text style={styles.headerSubtitle}>Kategori seç ve soru çözmeye başla</Text>
+          </View>
+          <TouchableOpacity
+            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            {mode === 'dark' ? <Sun size={20} color="#FFFFFF" /> : <Moon size={20} color="#FFFFFF" />}
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentInner} showsVerticalScrollIndicator={false}>

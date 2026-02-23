@@ -128,9 +128,6 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
       const newXP = (prev.xp || 0) + xpGain;
       const oldLevel = calculateLevel(prev.xp || 0).level;
       const newLevel = calculateLevel(newXP).level;
-      if (newLevel > oldLevel) {
-        setTimeout(() => useLevelUpStore.getState().triggerLevelUp(newLevel), 0);
-      }
       const updated: UserStats = {
         ...prev,
         totalAnswered: prev.totalAnswered + 1,
@@ -150,16 +147,24 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
         },
       };
 
-      // Check achievements
-      const bookmarkCount = useBookmarkStore.getState().getBookmarkCount();
-      const reviewData = useSpacedRepetitionStore.getState().reviewData;
-      useAchievementStore.getState().checkAndUnlock(updated, bookmarkCount, reviewData);
+      // Defer state updates on other stores to avoid React "Cannot update component while rendering" error
+      setTimeout(() => {
+        if (newLevel > oldLevel) {
+          useLevelUpStore.getState().triggerLevelUp(newLevel);
+        }
 
-      // Update personal records
-      const dailyRecords = useAnalyticsStore.getState().dailyRecords;
-      usePersonalRecordsStore.getState().updateRecords(updated, dailyRecords);
+        // Check achievements
+        const bookmarkCount = useBookmarkStore.getState().getBookmarkCount();
+        const reviewData = useSpacedRepetitionStore.getState().reviewData;
+        useAchievementStore.getState().checkAndUnlock(updated, bookmarkCount, reviewData);
 
-      saveStatsMutation.mutate(updated);
+        // Update personal records
+        const dailyRecords = useAnalyticsStore.getState().dailyRecords;
+        usePersonalRecordsStore.getState().updateRecords(updated, dailyRecords);
+
+        saveStatsMutation.mutate(updated);
+      }, 0);
+
       return updated;
     });
   }, [saveStatsMutation]);
@@ -176,11 +181,20 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
     setStats(prev => {
       const examHistory = [result, ...prev.examHistory].slice(0, MAX_EXAM_HISTORY);
       const updated: UserStats = { ...prev, examHistory };
-      saveStatsMutation.mutate(updated);
 
-      // Update personal records
-      const dailyRecords = useAnalyticsStore.getState().dailyRecords;
-      usePersonalRecordsStore.getState().updateRecords(updated, dailyRecords);
+      // Defer state updates on other stores to avoid React "Cannot update component while rendering" error
+      setTimeout(() => {
+        // Update personal records
+        const dailyRecords = useAnalyticsStore.getState().dailyRecords;
+        usePersonalRecordsStore.getState().updateRecords(updated, dailyRecords);
+
+        // Check achievements (Exam Ace, Perfectionist, etc.)
+        const bookmarkCount = useBookmarkStore.getState().getBookmarkCount();
+        const reviewData = useSpacedRepetitionStore.getState().reviewData;
+        useAchievementStore.getState().checkAndUnlock(updated, bookmarkCount, reviewData);
+
+        saveStatsMutation.mutate(updated);
+      }, 0);
 
       return updated;
     });

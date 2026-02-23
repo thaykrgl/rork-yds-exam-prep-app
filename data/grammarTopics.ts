@@ -803,6 +803,558 @@ export const grammarTopics: GrammarTopic[] = [
     relatedQuestionIds: ['g036'],
     order: 15,
   },
+  {
+    id: 'reported_speech',
+    titleTr: 'Dolaylı Anlatım',
+    description: 'Reported speech, tense shifts, reporting verbs',
+    theme: 'clauses',
+    difficulty: 'intermediate',
+    icon: 'MessageSquare',
+    color: '#059669',
+    content: {
+      introduction:
+        'Dolaylı anlatım (Reported Speech), birinin söylediği sözleri aktarırken kullanılan yapıdır. Ana cümledeki fiil geçmiş zamandaysa, aktarılan cümlede zaman bir adım geriye kayar. YDS\'de reporting verb seçimi ve zaman kayması sıklıkla test edilir.',
+      rules: [
+        {
+          formula: '"I am happy" → He said (that) he was happy',
+          explanation: 'Present Simple → Past Simple olarak kayar.',
+        },
+        {
+          formula: '"I have finished" → She said she had finished',
+          explanation: 'Present Perfect → Past Perfect olarak kayar.',
+        },
+        {
+          formula: '"I will go" → He said he would go',
+          explanation: 'Will → Would olarak kayar.',
+        },
+        {
+          formula: 'Reporting verbs: say, tell, claim, state, deny, admit, explain, warn, remind',
+          explanation: 'Her reporting verb farklı yapı gerektirir: tell + someone, say + that, warn + someone + (not) to V1.',
+        },
+        {
+          formula: 'Reported questions: He asked if/whether + S + V (düz sıra)',
+          explanation: 'Soru cümlelerinde özne-yüklem sırası düzleşir, soru işareti kullanılmaz.',
+        },
+      ],
+      examples: [
+        { english: 'The scientist claimed that the experiment had yielded remarkable results.', turkish: 'Bilim insanı deneyin dikkat çekici sonuçlar verdiğini iddia etti.' },
+        { english: 'The doctor warned the patient not to skip his medication.', turkish: 'Doktor hastayı ilacını atlamaması konusunda uyardı.' },
+        { english: 'She asked whether the conference had been postponed.', turkish: 'Konferansın ertelenip ertelenmediğini sordu.' },
+        { english: 'He reminded us to submit the application before the deadline.', turkish: 'Bize başvuruyu son tarihten önce teslim etmemizi hatırlattı.' },
+      ],
+      ydsPatterns: [
+        'Reporting verb seçimi sıklıkla sorulur: "claimed", "denied", "insisted" gibi farklı fiiller farklı yapılar gerektirir.',
+        '"Deny + -ing" yapısı sık çıkar: "He denied stealing..."',
+        'Reported questions\'da düz cümle sırası beklenir — devrik sıra (soru sırası) yanlıştır.',
+        '"Whether...or not" yapısı evet/hayır sorularını aktarırken kullanılır.',
+      ],
+      commonMistakes: [
+        '"He said me..." YANLIŞ → "He told me..." veya "He said to me..." olmalı.',
+        'Reported question\'da soru sırası kullanmak: "He asked where was she" YANLIŞ → "where she was".',
+        '"Deny to steal" YANLIŞ → "deny stealing" olmalı.',
+        'Genel doğrularda gereksiz zaman kaydırma yapmak — bilimsel gerçekler değişmez.',
+      ],
+      quickTip: '"Say" + that clause, "Tell" + someone + that clause — bu ikisini asla karıştırmayın.',
+    },
+    relatedQuestionIds: [],
+    order: 16,
+  },
+  {
+    id: 'articles_determiners',
+    titleTr: 'Tanımlıklar ve Belirleyiciler',
+    description: 'A/an, the, zero article, demonstratives',
+    theme: 'special_structures',
+    difficulty: 'beginner',
+    icon: 'Type',
+    color: '#7C3AED',
+    content: {
+      introduction:
+        'Tanımlıklar (Articles) ve belirleyiciler (Determiners), isimlerin önüne gelerek onları niteleyen sözcüklerdir. "A/an" belirsiz, "the" belirli tanımlıktır. YDS\'de özellikle "the" kullanımı, jenerik (genel) anlamda tanımlık kullanımı ve coğrafi isimlerle tanımlık kullanımı sorulur.',
+      rules: [
+        {
+          formula: 'a/an + countable singular noun (ilk kez bahsedilen)',
+          explanation: 'Sayılabilen tekil isimlerle, ilk kez söz edildiğinde kullanılır.',
+        },
+        {
+          formula: 'the + previously mentioned / unique / specific noun',
+          explanation: 'Daha önce bahsedilen, tek olan veya belirli nesneler için kullanılır.',
+        },
+        {
+          formula: 'Zero article: genel anlamlarda çoğul/sayılamayan isimler',
+          explanation: '"Water is essential" — genel anlam, tanımlık yok.',
+        },
+        {
+          formula: 'the + superlative / ordinal: the best, the first',
+          explanation: 'Üstünlük ve sıra sayılarından önce "the" zorunludur.',
+        },
+        {
+          formula: 'the + musical instruments, the + unique: the piano, the sun',
+          explanation: 'Müzik aletleri ve tek olan nesnelerle "the" kullanılır.',
+        },
+      ],
+      examples: [
+        { english: 'The research conducted at the university has had a significant impact on public policy.', turkish: 'Üniversitede yürütülen araştırma kamu politikası üzerinde önemli bir etki yapmıştır.' },
+        { english: 'Education is the key to success in the modern world.', turkish: 'Eğitim modern dünyada başarının anahtarıdır.' },
+        { english: 'The Amazon is the largest rainforest in the world.', turkish: 'Amazon dünyadaki en büyük yağmur ormanıdır.' },
+        { english: 'A new study published in Nature has revealed surprising findings.', turkish: 'Nature\'da yayımlanan yeni bir çalışma şaşırtıcı bulgular ortaya koydu.' },
+      ],
+      ydsPatterns: [
+        'Akademik metinlerde "the + noun + of" yapısı çok yaygındır: "the impact of technology".',
+        'Jenerik anlam: "Dogs are loyal" (tanımlıksız çoğul) vs "The dog is a loyal animal" (temsili tekil).',
+        'Coğrafi isimler: "the" + nehir/okyanus/çöl/ada grubu; tanımlıksız: göl/dağ/kıta/şehir.',
+        '"The" + sıfat = çoğul isim: "the rich" (zenginler), "the elderly" (yaşlılar).',
+      ],
+      commonMistakes: [
+        '"The life is beautiful" YANLIŞ (genel anlamda) → "Life is beautiful" olmalı.',
+        '"I like the music" YANLIŞ (genel) → "I like music" olmalı.',
+        'Coğrafi hatalarda: "the Turkey" YANLIŞ → "Turkey" (ülke isimleriyle genellikle "the" yok).',
+        '"A information" YANLIŞ → "information" sayılamaz, "a piece of information" olmalı.',
+      ],
+      quickTip: 'Genel bir kavramdan bahsederken tanımlık kullanmayın: "Water is vital", "Education matters". Belirli bir şeyden bahsediyorsanız "the" koyun.',
+    },
+    relatedQuestionIds: [],
+    order: 17,
+  },
+  {
+    id: 'prepositions',
+    titleTr: 'Edatlar',
+    description: 'Prepositional phrases, verb + preposition collocations',
+    theme: 'special_structures',
+    difficulty: 'intermediate',
+    icon: 'Navigation',
+    color: '#DC2626',
+    content: {
+      introduction:
+        'Edatlar (Prepositions), İngilizce\'de yer, zaman, yön ve soyut ilişkileri ifade eden yapı taşlarıdır. YDS\'de özellikle fiil + edat birliktelikleri (collocations) ve edatların anlamı değiştirme gücü sıklıkla test edilir.',
+      rules: [
+        {
+          formula: 'Verb + Preposition collocations',
+          explanation: 'Belirli fiiller belirli edatlarla kullanılır: depend on, consist of, result in, account for...',
+        },
+        {
+          formula: 'Adjective + Preposition collocations',
+          explanation: 'Sıfatlar belirli edatlarla kullanılır: aware of, responsible for, interested in, capable of...',
+        },
+        {
+          formula: 'in spite of / on behalf of / in terms of / by means of',
+          explanation: 'Akademik metinlerde sık kullanılan çok kelimeli edat öbekleri.',
+        },
+        {
+          formula: 'Preposition + Gerund (-ing)',
+          explanation: 'Edatlardan sonra her zaman isim veya gerund gelir, infinitive gelmez.',
+        },
+      ],
+      examples: [
+        { english: 'The success of the project depends on the cooperation of all departments.', turkish: 'Projenin başarısı tüm departmanların işbirliğine bağlıdır.' },
+        { english: 'The researchers were unable to account for the anomalies in the data.', turkish: 'Araştırmacılar verilerdeki anormallikleri açıklayamadı.' },
+        { english: 'In terms of economic growth, the country has made significant progress.', turkish: 'Ekonomik büyüme açısından ülke önemli ilerleme kaydetmiştir.' },
+        { english: 'She succeeded in persuading the committee to approve the proposal.', turkish: 'Komiteyi teklifi onaylamaya ikna etmeyi başardı.' },
+      ],
+      ydsPatterns: [
+        '"Result in" (sonuç vermek) vs "result from" (kaynaklanmak) ayrımı çok sık sorulur.',
+        '"Consist of" (oluşmak) ile "consist in" (dayandığı şey) karıştırılır.',
+        '"Account for" (%... oranında oluşturmak / açıklamak) akademik metinlerde yaygın.',
+        '"On the grounds that" (gerekçesiyle), "by virtue of" (sayesinde) gibi akademik edatlar.',
+      ],
+      commonMistakes: [
+        '"Depend of" YANLIŞ → "depend on" olmalı.',
+        '"Result from" ile "result in" karıştırmak — "result in" = sonuç vermek, "result from" = kaynaklanmak.',
+        '"Interested at" YANLIŞ → "interested in" olmalı.',
+        '"Capable to do" YANLIŞ → "capable of doing" olmalı.',
+      ],
+      quickTip: 'YDS\'deki edat soruları genellikle collocation (birliktelik) bilgisi ister. "Depend on, consist of, result in, account for" — bu dörtlüyü ezberleyin.',
+    },
+    relatedQuestionIds: [],
+    order: 18,
+  },
+  {
+    id: 'noun_clauses',
+    titleTr: 'İsim Cümlecikleri',
+    description: 'That-clauses, wh-clauses, whether/if clauses',
+    theme: 'clauses',
+    difficulty: 'intermediate',
+    icon: 'FileText',
+    color: '#0891B2',
+    content: {
+      introduction:
+        'İsim cümlecikleri (Noun Clauses), bir cümlede isim görevi üstlenen yan cümleciklerdir. Özne, nesne veya tümleç olarak kullanılabilirler. YDS\'de "that", "what", "whether", "how" ile başlayan isim cümlecikleri sıklıkla test edilir.',
+      rules: [
+        {
+          formula: 'That-clause: S + V + that + S + V',
+          explanation: '"That" ile başlayan isim cümlecikleri genellikle nesne konumundadır.',
+        },
+        {
+          formula: 'What-clause: What + S + V + is/was...',
+          explanation: '"What" = "the thing that" anlamında kullanılır.',
+        },
+        {
+          formula: 'Whether/If + S + V (düz sıra)',
+          explanation: 'Evet/hayır sorusu anlamı taşır, soru sırası kullanılmaz.',
+        },
+        {
+          formula: 'It + is/was + adjective + that + S + V',
+          explanation: '"It" geçici özne olarak kullanılır, asıl özne "that" cümlesidir.',
+        },
+        {
+          formula: 'The fact that + S + V',
+          explanation: '"...olduğu gerçeği" anlamında, özellikle edattan sonra kullanılır.',
+        },
+      ],
+      examples: [
+        { english: 'It is widely believed that climate change will have devastating effects.', turkish: 'İklim değişikliğinin yıkıcı etkileri olacağına yaygın olarak inanılmaktadır.' },
+        { english: 'What surprised the researchers was the speed of the reaction.', turkish: 'Araştırmacıları şaşırtan reaksiyonun hızıydı.' },
+        { english: 'The fact that the experiment was not replicated raised doubts.', turkish: 'Deneyin tekrarlanmaması şüphe uyandırdı.' },
+        { english: 'Whether the new policy will be effective remains to be seen.', turkish: 'Yeni politikanın etkili olup olmayacağı henüz belirsiz.' },
+      ],
+      ydsPatterns: [
+        '"It is + adjective + that" yapısı YDS paragraf sorularında çok yaygın.',
+        '"What" ile başlayan yapılar sıklıkla özne konumundadır ve tekil fiil alır.',
+        '"The fact that" edattan sonra isim cümlesi getirmek için kullanılır.',
+        '"Whether" vs "if" ayrımı: cümle başında özne olarak sadece "whether" kullanılır.',
+      ],
+      commonMistakes: [
+        '"What is he going to do is..." YANLIŞ → "What he is going to do is..." (düz sıra).',
+        'İsim cümlecisinde soru sırası kullanmak.',
+        '"If" cümle başında özne olarak kullanmak (sadece "whether" olur).',
+        '"That" yerine "what" kullanmak veya tersi — "that" = bağlaç, "what" = bir şey anlamı taşır.',
+      ],
+      quickTip: '"That" bir bağlaçtır ve tek başına anlam taşımaz. "What" ise "the thing that" demektir ve hem bağlaç hem de anlam taşır.',
+    },
+    relatedQuestionIds: [],
+    order: 19,
+  },
+  {
+    id: 'adverbial_clauses',
+    titleTr: 'Zarf Cümlecikleri',
+    description: 'Time, reason, purpose, result, concession clauses',
+    theme: 'clauses',
+    difficulty: 'intermediate',
+    icon: 'AlignLeft',
+    color: '#B45309',
+    content: {
+      introduction:
+        'Zarf cümlecikleri (Adverbial Clauses), ana cümleye zaman, neden, amaç, sonuç, koşul veya zıtlık anlamı katan yan cümleciklerdir. YDS\'de bağlaç seçimi (zıtlık mı, neden-sonuç mu, zaman mı?) sıklıkla test edilir.',
+      rules: [
+        {
+          formula: 'Zaman: when, while, as, before, after, until, as soon as, by the time, once',
+          explanation: 'Ana eylemin zamansal ilişkisini belirtir.',
+        },
+        {
+          formula: 'Neden: because, since, as, now that, on the grounds that, due to the fact that',
+          explanation: 'Eylemin nedenini açıklar.',
+        },
+        {
+          formula: 'Amaç: so that, in order that, so as to, with a view to',
+          explanation: 'Eylemin amacını belirtir.',
+        },
+        {
+          formula: 'Sonuç: so...that, such...that, so that (sonuç anlamında)',
+          explanation: 'Eylemin sonucunu ifade eder.',
+        },
+        {
+          formula: 'Zıtlık: although, even though, whereas, while, much as, no matter how',
+          explanation: 'Ana cümleyle zıtlık veya karşıtlık ilişkisi kurar.',
+        },
+      ],
+      examples: [
+        { english: 'Now that the results have been published, researchers can begin their analysis.', turkish: 'Sonuçlar yayımlandığına göre araştırmacılar analizlerine başlayabilir.' },
+        { english: 'Much as she wanted to attend the ceremony, her schedule did not permit it.', turkish: 'Törene katılmayı çok istese de programı buna izin vermedi.' },
+        { english: 'The government introduced new regulations so that pollution levels could be reduced.', turkish: 'Hükümet kirlilik seviyelerinin düşürülebilmesi için yeni düzenlemeler getirdi.' },
+        { english: 'Whereas urban areas have access to healthcare, rural regions often lack basic services.', turkish: 'Kentsel alanlar sağlık hizmetine erişirken kırsal bölgeler çoğu zaman temel hizmetlerden yoksundur.' },
+      ],
+      ydsPatterns: [
+        '"Now that" (artık ... olduğuna göre) yapısı YDS\'de sık çıkar.',
+        '"Much as" = "Although...very much" anlamında zıtlık bağlacıdır.',
+        '"Whereas" iki farklı durumu karşılaştırır — "while" da benzer şekilde kullanılabilir.',
+        '"So that" + can/could (amaç) vs "so...that" (sonuç) ayrımı önemlidir.',
+      ],
+      commonMistakes: [
+        '"Although" ve "but" birlikte kullanmak — sadece birini seçin.',
+        '"Despite" + clause YANLIŞ → "Despite + -ing/noun" veya "Despite the fact that + clause".',
+        '"So that" (amaç) ile "so...that" (sonuç) karıştırmak.',
+        '"Because of" + clause YANLIŞ → "because of + noun" veya "because + clause".',
+      ],
+      quickTip: 'Bağlaç seçimi sorusunda önce cümleler arasındaki anlamsal ilişkiyi belirleyin: zıtlık mı? Neden–sonuç mu? Amaç mı?',
+    },
+    relatedQuestionIds: [],
+    order: 20,
+  },
+  {
+    id: 'quantifiers',
+    titleTr: 'Nicelik Belirleyiciler',
+    description: 'Many, much, few, little, some, any, each, every',
+    theme: 'special_structures',
+    difficulty: 'beginner',
+    icon: 'Hash',
+    color: '#4F46E5',
+    content: {
+      introduction:
+        'Nicelik belirleyiciler (Quantifiers), isimlerin miktarını belirten sözcüklerdir. YDS\'de özellikle "few" vs "a few", "little" vs "a little" ayrımı ve "each" vs "every" farkı sıklıkla test edilir.',
+      rules: [
+        {
+          formula: 'few + countable plural (olumsuz anlam: çok az, neredeyse hiç)',
+          explanation: '"Few students passed" — çok az öğrenci geçti (olumsuz ton).',
+        },
+        {
+          formula: 'a few + countable plural (olumlu anlam: birkaç)',
+          explanation: '"A few students passed" — birkaç öğrenci geçti (olumlu ton).',
+        },
+        {
+          formula: 'little + uncountable (olumsuz anlam: çok az)',
+          explanation: '"Little water remains" — çok az su kaldı (olumsuz ton).',
+        },
+        {
+          formula: 'a little + uncountable (olumlu anlam: biraz)',
+          explanation: '"A little patience is needed" — biraz sabır gerekli (olumlu ton).',
+        },
+        {
+          formula: 'each (her biri ayrı ayrı, tekil) vs every (tamamı, tekil)',
+          explanation: '"Each student has a book" (bireysel) vs "Every student passed" (genel).',
+        },
+      ],
+      examples: [
+        { english: 'Few countries have managed to eliminate poverty entirely.', turkish: 'Çok az ülke yoksulluğu tamamen ortadan kaldırmayı başardı.' },
+        { english: 'A little progress has been made in reducing carbon emissions.', turkish: 'Karbon emisyonlarını azaltmada biraz ilerleme kaydedildi.' },
+        { english: 'Each participant was given a certificate of completion.', turkish: 'Her katılımcıya tamamlama sertifikası verildi.' },
+        { english: 'There are several factors that contribute to this phenomenon.', turkish: 'Bu olguya katkıda bulunan çeşitli faktörler var.' },
+      ],
+      ydsPatterns: [
+        '"Few" (olumsuz) vs "a few" (olumlu) ayrımı dolaylı olarak paragraf sorularında çıkar.',
+        '"Little" vs "a little" ayrımı ile anlam değişir — YDS\'de dikkat edin.',
+        '"Each of + the + plural noun + singular verb" yapısı sorulur.',
+        '"None of the + plural noun" + tekil MI çoğul MU? — ikisi de kabul edilir ama YDS genellikle tekil bekler.',
+      ],
+      commonMistakes: [
+        '"Few" ile "a few" karıştırmak — anlam tamamen değişir.',
+        '"Much" sayılabilen isimlerle kullanmak: "much students" YANLIŞ → "many students".',
+        '"Each" ile çoğul fiil kullanmak: "Each student have" YANLIŞ → "has".',
+        '"Every" çoğul isimle kullanmak: "every students" YANLIŞ → "every student".',
+      ],
+      quickTip: '"A" varsa olumlu (a few = birkaç, a little = biraz), "a" yoksa olumsuz (few = çok az, little = çok az).',
+    },
+    relatedQuestionIds: [],
+    order: 21,
+  },
+  {
+    id: 'word_formation',
+    titleTr: 'Sözcük Türetme',
+    description: 'Suffixes, prefixes, noun/adjective/adverb/verb forms',
+    theme: 'special_structures',
+    difficulty: 'intermediate',
+    icon: 'Puzzle',
+    color: '#E11D48',
+    content: {
+      introduction:
+        'Sözcük türetme (Word Formation), kök sözcüklere ön ek (prefix) ve son ek (suffix) eklenerek yeni sözcükler oluşturma sürecidir. YDS\'de boşluğa hangi türde sözcük geleceğini (isim mi, sıfat mı, zarf mı, fiil mi) belirlemek kritik önem taşır.',
+      rules: [
+        {
+          formula: 'Noun suffixes: -tion, -ment, -ness, -ity, -ence/-ance, -er/-or, -ist, -ism',
+          explanation: '"Education, development, awareness, ability, existence" — isim türeten ekler.',
+        },
+        {
+          formula: 'Adjective suffixes: -ous, -ive, -ful, -less, -able/-ible, -al, -ent/-ant',
+          explanation: '"Dangerous, effective, helpful, careless, responsible" — sıfat türeten ekler.',
+        },
+        {
+          formula: 'Adverb suffix: -ly',
+          explanation: '"Significantly, remarkably, considerably" — zarf türeten ek.',
+        },
+        {
+          formula: 'Verb suffixes: -ize, -ify, -en, -ate',
+          explanation: '"Modernize, clarify, strengthen, activate" — fiil türeten ekler.',
+        },
+        {
+          formula: 'Negative prefixes: un-, in-/im-/ir-/il-, dis-, non-, mis-',
+          explanation: '"Unable, impossible, irregular, illegal, disagree, nonsense, misunderstand".',
+        },
+      ],
+      examples: [
+        { english: 'The significance of the discovery was immediately recognized.', turkish: 'Keşfin önemi hemen fark edildi.' },
+        { english: 'The proposal was considered highly controversial.', turkish: 'Teklif son derece tartışmalı olarak değerlendirildi.' },
+        { english: 'Environmental awareness has increased considerably in recent years.', turkish: 'Çevre bilinci son yıllarda önemli ölçüde artmıştır.' },
+        { english: 'It is essential to differentiate between correlation and causation.', turkish: 'Korelasyon ve nedensellik arasında ayrım yapmak esastır.' },
+      ],
+      ydsPatterns: [
+        'Boşluk bir cümlede isim gerektiriyorsa (the + ___ + of) isim eki arayın.',
+        'Boşluktan önce "very" veya "highly" varsa sıfat gerekir.',
+        'Fiili niteleyen bir boşluk varsa zarf (-ly) gerekir.',
+        '"Considerable" (sıfat) vs "considerably" (zarf) gibi ayrımlar sıklıkla test edilir.',
+      ],
+      commonMistakes: [
+        '"Signification" diye bir sözcük yok → "significance" olmalı.',
+        '"Considerable" ile "considerate" (düşünceli) karıştırmak.',
+        'Sıfat gereken yere zarf koymak veya tersi.',
+        '"Economic" (ekonomik/ekonomiye ait) vs "economical" (tutumlu, hesaplı) karıştırmak.',
+      ],
+      quickTip: 'Boşluktan önceki ve sonraki sözcüklere bakarak türü belirleyin: the + ___ + of = isim, very + ___ = sıfat, V + ___ = zarf.',
+    },
+    relatedQuestionIds: [],
+    order: 22,
+  },
+  {
+    id: 'emphatic_structures',
+    titleTr: 'Pekiştirme Yapıları',
+    description: 'Do/does/did emphasis, indeed, auxiliaries for emphasis',
+    theme: 'sentence_structure',
+    difficulty: 'advanced',
+    icon: 'Bold',
+    color: '#9333EA',
+    content: {
+      introduction:
+        'Pekiştirme yapıları (Emphatic Structures), cümledeki bir öğeyi güçlendirmek veya vurgulamak için kullanılır. YDS\'de "do/does/did + V1" yapısı, "indeed", "it is...that" vurgulu cümleleri ve zarf pekiştirmeleri sıklıkla karşınıza çıkar.',
+      rules: [
+        {
+          formula: 'S + do/does/did + V1 (base form)',
+          explanation: 'Olumlu cümlelerde fiili pekiştirmek için "do/does/did" eklenir: "I did submit the report."',
+        },
+        {
+          formula: 'It is/was + vurgulanan öğe + that/who',
+          explanation: 'Cleft sentence yapısıyla belirli bir öğe vurgulanır.',
+        },
+        {
+          formula: 'What + S + V + is/was... (pseudo-cleft)',
+          explanation: '"Yapılan şey..." anlamında vurgu yapar.',
+        },
+        {
+          formula: 'So/Such + ... + that (sonuç vurgusu)',
+          explanation: '"O kadar...ki" anlamında pekiştirme yapar.',
+        },
+      ],
+      examples: [
+        { english: 'The findings do suggest a strong correlation between the two variables.', turkish: 'Bulgular gerçekten iki değişken arasında güçlü bir korelasyon olduğunu göstermektedir.' },
+        { english: 'It was the lack of funding that prevented the project from being completed.', turkish: 'Projenin tamamlanmasını engelleyen finansman eksikliğiydi.' },
+        { english: 'What makes this discovery remarkable is its practical applications.', turkish: 'Bu keşfi dikkat çekici kılan pratik uygulamalarıdır.' },
+        { english: 'The results were indeed more promising than expected.', turkish: 'Sonuçlar gerçekten beklenenden daha umut vericiydi.' },
+      ],
+      ydsPatterns: [
+        '"Do/does/did + V1" akademik metinlerde vurgu için kullanılır — boşlukta bu yapıyı arayın.',
+        '"Indeed" pekiştirme zarfı olarak cümlede vurgu yapar.',
+        '"It is...that" yapısı hem cleft sentence hem pekiştirme olarak kullanılır.',
+        '"The very + noun" yapısı da pekiştirme olarak kullanılır: "the very idea" (tamamen, bizzat).',
+      ],
+      commonMistakes: [
+        '"He does goes" YANLIŞ → "He does go" (do/does/did + base form).',
+        '"It was until...that" YANLIŞ → "It was NOT until...that" olmalı.',
+        'Pekiştirme "do" fiilini soru veya olumsuz yapıdaki "do" ile karıştırmak.',
+        '"Very" ile "the very" karıştırmak — "the very" pekiştirme yapısıdır.',
+      ],
+      quickTip: 'Olumlu bir cümlede "do/does/did" gördüğünüzde bu bir pekiştirme (emphasis) yapısıdır — "gerçekten, hakikaten" anlamı katar.',
+    },
+    relatedQuestionIds: [],
+    order: 23,
+  },
+  {
+    id: 'ellipsis_substitution',
+    titleTr: 'Eksiltme ve Yerine Koyma',
+    description: 'So, neither, nor, do so, that of, those of',
+    theme: 'sentence_structure',
+    difficulty: 'advanced',
+    icon: 'Scissors',
+    color: '#64748B',
+    content: {
+      introduction:
+        'Eksiltme (Ellipsis) ve yerine koyma (Substitution), tekrardan kaçınmak için cümledeki bazı öğelerin çıkarılması veya başka sözcüklerle değiştirilmesidir. YDS\'de "that of", "those of", "so", "do so", "neither/nor + auxiliary" yapıları sıklıkla test edilir.',
+      rules: [
+        {
+          formula: 'that of / those of (tekil/çoğul ismin yerine)',
+          explanation: '"The population of Turkey is larger than that of Greece." — "that" = "the population" yerine.',
+        },
+        {
+          formula: 'do so / do it / do that (fiil öbeğinin yerine)',
+          explanation: '"She wanted to apply, but she failed to do so." — "do so" = "apply" yerine.',
+        },
+        {
+          formula: 'So + auxiliary + S (olumlu katılma)',
+          explanation: '"I like coffee." — "So do I." (Ben de.)',
+        },
+        {
+          formula: 'Neither/Nor + auxiliary + S (olumsuz katılma)',
+          explanation: '"I don\'t like tea." — "Neither do I." (Ben de sevmem.)',
+        },
+        {
+          formula: 'one / ones (ismin yerine)',
+          explanation: '"This book is better than the one I read last week." — "one" = "book".',
+        },
+      ],
+      examples: [
+        { english: 'The climate of southern Turkey is milder than that of the northern regions.', turkish: 'Güney Türkiye\'nin iklimi kuzey bölgelerinkinden daha ılıman.' },
+        { english: 'The policies adopted by the EU differ significantly from those of the US.', turkish: 'AB\'nin benimsediği politikalar ABD\'ninkilerden önemli ölçüde farklıdır.' },
+        { english: 'The committee decided to postpone the meeting, and the board agreed to do so as well.', turkish: 'Komite toplantıyı ertelemeye karar verdi ve yönetim kurulu da aynı şekilde kabul etti.' },
+        { english: 'She didn\'t finish the assignment, and neither did her classmates.', turkish: 'O ödevi bitirmedi ve sınıf arkadaşları da bitirmedi.' },
+      ],
+      ydsPatterns: [
+        '"That of" (tekil karşılaştırma) ve "those of" (çoğul karşılaştırma) YDS\'de çok sık çıkar.',
+        '"Do so" akademik metinlerde fiil tekrarından kaçınmak için kullanılır.',
+        '"Neither/Nor + auxiliary + S" yapısında yardımcı fiil seçimi önemlidir.',
+        '"The former...the latter" (ilki...sonraki) yapısı paragraf sorularında çıkar.',
+      ],
+      commonMistakes: [
+        '"That of" yerine "the one of" kullanmak (yanlış değil ama YDS\'de "that of" tercih edilir).',
+        '"Neither don\'t I" YANLIŞ → "Neither do I" (çift olumsuzluk).',
+        '"Those of" yerine "that of" kullanmak (çoğul isimler için "those" olmalı).',
+        '"So am I" ile "So I am" karıştırmak — "So am I" = Ben de öyleyim, "So I am" = Evet, öyleyim.',
+      ],
+      quickTip: 'Tekil isim karşılaştırması = "that of", çoğul isim karşılaştırması = "those of". Bu ikiliyi kesinlikle ezberleyin.',
+    },
+    relatedQuestionIds: [],
+    order: 24,
+  },
+  {
+    id: 'parallel_structure',
+    titleTr: 'Paralel Yapı',
+    description: 'Parallelism in lists, correlative conjunctions',
+    theme: 'sentence_structure',
+    difficulty: 'intermediate',
+    icon: 'Columns',
+    color: '#0D9488',
+    content: {
+      introduction:
+        'Paralel yapı (Parallel Structure/Parallelism), bir cümledeki sıralı öğelerin aynı dilbilgisel formda olmasını gerektiren kuraldır. YDS\'de özellikle eşlenik bağlaçlarla (both...and, either...or, not only...but also) ve listeleme yapılarında paralellik test edilir.',
+      rules: [
+        {
+          formula: 'A, B, and C — hepsi aynı formda',
+          explanation: 'Sıralanan öğeler aynı sözcük türünde olmalıdır: "reading, writing, and speaking" (hepsi gerund).',
+        },
+        {
+          formula: 'Both A and B (ikisi de aynı formda)',
+          explanation: '"Both" ile "and" arasındaki öğe, "and" den sonraki öğe ile aynı formda olmalı.',
+        },
+        {
+          formula: 'Not only A but also B (aynı form)',
+          explanation: '"Not only" dan sonraki yapı "but also" dan sonraki yapı ile paralel olmalı.',
+        },
+        {
+          formula: 'Either A or B / Neither A nor B',
+          explanation: 'A ve B aynı dilbilgisel yapıda olmalı.',
+        },
+        {
+          formula: 'Rather than + same form as the compared element',
+          explanation: '"She chose to study rather than to party" — her iki taraf da infinitive.',
+        },
+      ],
+      examples: [
+        { english: 'The new policy aims to reduce costs, improve efficiency, and increase productivity.', turkish: 'Yeni politika maliyetleri düşürmeyi, verimliliği artırmayı ve üretkenliği yükseltmeyi amaçlıyor.' },
+        { english: 'The program is designed not only to educate but also to inspire.', turkish: 'Program sadece eğitmek için değil, aynı zamanda ilham vermek için tasarlandı.' },
+        { english: 'The researcher focused on both analyzing the data and interpreting the results.', turkish: 'Araştırmacı hem verileri analiz etmeye hem de sonuçları yorumlamaya odaklandı.' },
+        { english: 'Students can either take the exam in June or defer it to September.', turkish: 'Öğrenciler ya sınavı Haziran\'da alabilir ya da Eylül\'e erteleyebilir.' },
+      ],
+      ydsPatterns: [
+        '"Not only...but also" yapısında paralellik ve devrik yapı birlikte sorulabilir.',
+        'Listeleme sorularında boşluğa gelen sözcük diğer öğelerle aynı formda olmalıdır.',
+        '"Both...and" arasındaki yapısal paralellik kontrol edilir.',
+        '"Rather than" + gerund/infinitive paralelliği sorulur.',
+      ],
+      commonMistakes: [
+        '"To read, writing, and speak" YANLIŞ → hepsi aynı formda olmalı.',
+        '"Not only to educate but also inspiring" YANLIŞ → ikisi de to-infinitive veya ikisi de gerund olmalı.',
+        '"Both...as well as" YANLIŞ → "Both...and" olmalı.',
+        '"Either...and" YANLIŞ → "Either...or" olmalı.',
+      ],
+      quickTip: 'Eşlenik bağlaçları gördüğünüzde (both...and, either...or, not only...but also) iki tarafın dilbilgisel formunun EŞİT olduğundan emin olun.',
+    },
+    relatedQuestionIds: [],
+    order: 25,
+  },
 ];
 
 export const grammarThemeLabels: Record<string, string> = {
