@@ -20,9 +20,6 @@ import { useRouter, useSegments } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
-// ⚠️ ONE-TIME RESET — Remove this block after testing!
-AsyncStorage.clear().then(() => console.log('✅ All app data has been reset!'));
-
 const queryClient = new QueryClient();
 
 function OnboardingRedirect() {

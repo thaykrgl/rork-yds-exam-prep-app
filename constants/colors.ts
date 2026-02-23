@@ -1,9 +1,9 @@
 import { ThemeMode } from '@/stores/themeStore';
 
 const LightColors = {
-  primary: '#1B2541',
-  primaryLight: '#2A3A5C',
-  primaryDark: '#111A30',
+  primary: '#2563EB', // Vibrant Blue instead of dark navy
+  primaryLight: '#3B82F6', 
+  primaryDark: '#1D4ED8',
   accent: '#D4A843',
   accentLight: '#E8C76B',
   accentSoft: '#F5E6C0',

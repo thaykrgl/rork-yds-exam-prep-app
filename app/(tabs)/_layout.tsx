@@ -14,8 +14,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.textLight,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.primary,
-          borderTopWidth: 0,
+          backgroundColor: colors.surface,
+          borderTopWidth: 1,
           borderTopColor: colors.border,
           ...(Platform.OS === 'web' ? { height: 60 } : {}),
         },

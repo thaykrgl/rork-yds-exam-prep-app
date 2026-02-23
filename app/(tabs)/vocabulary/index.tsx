@@ -20,6 +20,7 @@ type FilterType = 'all' | 'learning' | 'mastered';
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced';
 
 const FREE_CARD_LIMIT = 20;
+const ITEMS_PER_PAGE = 20;
 
 function getDayOfYear(): number {
   const now = new Date();
@@ -41,6 +42,7 @@ export default function VocabularyScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [showPaywall, setShowPaywall] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   // Sync filter when parameters change (handle navigation from other screens)
   React.useEffect(() => {
@@ -61,6 +63,17 @@ export default function VocabularyScreen() {
     }
     return true;
   }), [vocabCards, filter, levelFilter, searchQuery]);
+
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [filter, levelFilter, searchQuery]);
+
+  const paginatedCards = useMemo(() => {
+    return filteredCards.slice(0, visibleCount);
+  }, [filteredCards, visibleCount]);
+
+  const hasMore = visibleCount < filteredCards.length;
 
   const masteredCount = vocabCards.filter(c => c.mastered).length;
 
@@ -258,54 +271,49 @@ export default function VocabularyScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredCards}
+          data={paginatedCards}
           renderItem={renderCard}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <>
-              {/* Word of the Day */}
-              {wordOfTheDay && filter === 'all' && (
-                <TouchableOpacity
-                  style={styles.wotdCard}
-                  activeOpacity={0.9}
-                  onPress={() => handleFlip(wordOfTheDay.id)}
+            wordOfTheDay && filter === 'all' ? (
+              <TouchableOpacity
+                style={styles.wotdCard}
+                activeOpacity={0.9}
+                onPress={() => handleFlip(wordOfTheDay.id)}
+              >
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryLight]}
+                  style={styles.wotdGradient}
                 >
-                  <LinearGradient
-                    colors={[colors.primary, colors.primaryLight]}
-                    style={styles.wotdGradient}
-                  >
-                    <View style={styles.wotdHeader}>
-                      <Sparkles size={16} color="#FFFFFF" />
-                      <Text style={styles.wotdLabel}>Günün Kelimesi</Text>
-                    </View>
-                    <Text style={styles.wotdWord}>{wordOfTheDay.word}</Text>
-                    <Text style={styles.wotdMeaning}>{wordOfTheDay.meaning}</Text>
-                    <View style={styles.wotdExampleBox}>
-                      <Text style={styles.wotdExample}>"{wordOfTheDay.example}"</Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
-
-              {/* Word Match Game Button */}
-              {filter === 'all' && (
-                <TouchableOpacity
-                  style={styles.gameCard}
-                  activeOpacity={0.7}
-                  onPress={() => router.push('/word-match' as any)}
-                >
-                  <View style={[styles.gameIcon, { backgroundColor: colors.primary + '15' }]}>
-                    <Gamepad2 size={22} color={colors.primary} />
+                  <View style={styles.wotdHeader}>
+                    <Sparkles size={16} color="#FFFFFF" />
+                    <Text style={styles.wotdLabel}>Günün Kelimesi</Text>
                   </View>
-                  <View style={styles.gameInfo}>
-                    <Text style={styles.gameTitle}>Kelime Eşleştirme</Text>
-                    <Text style={styles.gameSub}>Kelime-anlam eşleştirerek öğren</Text>
+                  <Text style={styles.wotdWord}>{wordOfTheDay.word}</Text>
+                  <Text style={styles.wotdMeaning}>{wordOfTheDay.meaning}</Text>
+                  <View style={styles.wotdExampleBox}>
+                    <Text style={styles.wotdExample}>"{wordOfTheDay.example}"</Text>
                   </View>
-                </TouchableOpacity>
-              )}
-            </>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : null
+          }
+          ListFooterComponent={
+            hasMore ? (
+              <TouchableOpacity
+                style={styles.loadMoreButton}
+                activeOpacity={0.7}
+                onPress={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
+              >
+                <Text style={styles.loadMoreText}>
+                  Daha Fazla Göster ({filteredCards.length - visibleCount} kelime kaldı)
+                </Text>
+              </TouchableOpacity>
+            ) : filteredCards.length > ITEMS_PER_PAGE ? (
+              <Text style={styles.listEndText}>Tüm kelimeler gösterildi ✓</Text>
+            ) : null
           }
         />
       )}
@@ -658,5 +666,26 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center' as const,
+  },
+  loadMoreButton: {
+    backgroundColor: colors.accent + '15',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center' as const,
+    marginTop: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.accent + '30',
+  },
+  loadMoreText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.accent,
+  },
+  listEndText: {
+    fontSize: 13,
+    color: colors.textLight,
+    textAlign: 'center' as const,
+    marginVertical: 16,
   },
 });

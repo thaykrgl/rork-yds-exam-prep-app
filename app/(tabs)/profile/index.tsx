@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Flame, Target, TrendingUp, RotateCcw, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Library, Moon, Sun, Bookmark } from 'lucide-react-native';
+import { Award, Flame, Target, TrendingUp, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Moon, Sun, Bookmark } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
@@ -11,7 +11,7 @@ import { studyCategories } from '@/mocks/questions';
 import { formatDuration } from '@/utils/examUtils';
 import { useAchievementStore } from '@/stores/achievementStore';
 import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
-import { useGrammarStore } from '@/stores/grammarStore';
+
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { requestNotificationPermissions } from '@/utils/notifications';
@@ -24,7 +24,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const colors = useColors();
   const { mode, toggleTheme } = useThemeStore();
-  const { stats, vocabCards, resetStats, updateDailyGoal } = useStudy();
+  const { stats, vocabCards, updateDailyGoal } = useStudy();
 
   const handleUpdateGoal = () => {
     Alert.alert(
@@ -43,22 +43,9 @@ export default function ProfileScreen() {
   const accuracy = stats.totalAnswered > 0 ? Math.round((stats.correctAnswers / stats.totalAnswered) * 100) : 0;
   const masteredWords = vocabCards.filter(c => c.mastered).length;
   const topRecord = usePersonalRecordsStore(s => s.getTopRecords()[0]);
-  const grammarReadCount = useGrammarStore(s => s.getReadCount());
   const bookmarkCount = useBookmarkStore(s => s.getBookmarkCount());
-  const grammarTotalTopics = useGrammarStore(s => s.getTotalTopics());
 
   const styles = useMemo(() => createStyles(colors), [colors]);
-
-  const handleReset = () => {
-    Alert.alert(
-      'İstatistikleri Sıfırla',
-      'Tüm ilerlemen, vokal kartların ve istatistiklerin kalıcı olarak silinecek. Emin misin?',
-      [
-        { text: 'Vazgeç', style: 'cancel' },
-        { text: 'Sıfırla', style: 'destructive', onPress: resetStats },
-      ]
-    );
-  };
 
   const categoryData = useMemo(() => {
     return studyCategories.map(cat => {
@@ -239,18 +226,7 @@ export default function ProfileScreen() {
           <ChevronRight size={18} color={colors.textLight} />
         </TouchableOpacity>
 
-        {/* Grammar Library */}
-        <TouchableOpacity
-          style={styles.analyticsButton}
-          activeOpacity={0.7}
-          onPress={() => router.push('/grammar-library' as any)}
-        >
-          <Library size={20} color="#8B5CF6" />
-          <Text style={styles.analyticsText}>
-            Gramer Kütüphanesi · {grammarReadCount}/{grammarTotalTopics}
-          </Text>
-          <ChevronRight size={18} color={colors.textLight} />
-        </TouchableOpacity>
+
 
         {/* Bookmarked Questions */}
         {bookmarkCount > 0 && (
@@ -391,12 +367,6 @@ export default function ProfileScreen() {
           <Text style={{ color: colors.textLight, fontSize: 13, textAlign: 'center', marginVertical: 10 }}>Henüz sınav geçmişi yok.</Text>
         )}
 
-        <TouchableOpacity style={styles.resetButton} activeOpacity={0.7} onPress={handleReset} testID="reset-stats">
-          <RotateCcw color={colors.error} size={18} />
-          <Text style={styles.resetText}>İstatistikleri Sıfırla</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -678,22 +648,5 @@ const createStyles = (colors: any) => StyleSheet.create({
   examHistoryPercent: {
     fontSize: 13,
     fontWeight: '700' as const,
-  },
-  resetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    marginTop: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.error + '30',
-    backgroundColor: colors.error + '08',
-  },
-  resetText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: colors.error,
   },
 });

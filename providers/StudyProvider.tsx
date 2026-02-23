@@ -11,6 +11,9 @@ import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
 import { calculateXP, calculateLevel } from '@/utils/xpSystem';
 import { useLevelUpStore } from '@/stores/levelUpStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useStudyPlanStore } from '@/stores/studyPlanStore';
+import { useGrammarStore } from '@/stores/grammarStore';
 
 const STATS_KEY = 'yds_user_stats';
 const VOCAB_KEY = 'yds_vocab_cards';
@@ -203,7 +206,21 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
   const resetStats = useCallback(() => {
     setStats(defaultStats);
     saveStatsMutation.mutate(defaultStats);
-  }, [saveStatsMutation]);
+    setVocabCards(initialVocab);
+    saveVocabMutation.mutate(initialVocab);
+
+    // Reset all Zustand stores deeply
+    setTimeout(() => {
+      useAnalyticsStore.setState({ dailyRecords: [], currentSessionStart: null });
+      useAchievementStore.setState({ unlockedBadges: [] });
+      useSettingsStore.setState({ hasSeenOnboarding: false });
+      useSpacedRepetitionStore.setState({ reviewData: {} });
+      useBookmarkStore.setState({ bookmarks: [] });
+      useStudyPlanStore.setState({ activePlan: null });
+      useGrammarStore.setState({ topicProgress: {} });
+      usePersonalRecordsStore.setState({ records: {}, milestones: [] });
+    }, 0);
+  }, [saveStatsMutation, saveVocabMutation]);
 
   const updateDailyGoal = useCallback((newGoal: number) => {
     setStats(prev => {
