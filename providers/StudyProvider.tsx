@@ -9,7 +9,8 @@ import { useAnalyticsStore } from '@/stores/analyticsStore';
 import { useAchievementStore } from '@/stores/achievementStore';
 import { useBookmarkStore } from '@/stores/bookmarkStore';
 import { usePersonalRecordsStore } from '@/stores/personalRecordsStore';
-import { calculateXP } from '@/utils/xpSystem';
+import { calculateXP, calculateLevel } from '@/utils/xpSystem';
+import { useLevelUpStore } from '@/stores/levelUpStore';
 
 const STATS_KEY = 'yds_user_stats';
 const VOCAB_KEY = 'yds_vocab_cards';
@@ -125,6 +126,11 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
       const newStreak = isCorrect ? prev.streak + 1 : 0;
       const xpGain = calculateXP(isCorrect ? 'answer_correct' : 'answer_wrong');
       const newXP = (prev.xp || 0) + xpGain;
+      const oldLevel = calculateLevel(prev.xp || 0).level;
+      const newLevel = calculateLevel(newXP).level;
+      if (newLevel > oldLevel) {
+        setTimeout(() => useLevelUpStore.getState().triggerLevelUp(newLevel), 0);
+      }
       const updated: UserStats = {
         ...prev,
         totalAnswered: prev.totalAnswered + 1,
@@ -134,6 +140,7 @@ export const [StudyProvider, useStudy] = createContextHook(() => {
         dailyProgress: prev.dailyProgress + 1,
         lastStudyDate: new Date().toISOString().split('T')[0],
         xp: newXP,
+        level: newLevel,
         categoryStats: {
           ...prev.categoryStats,
           [category]: {

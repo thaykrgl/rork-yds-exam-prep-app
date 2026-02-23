@@ -6,6 +6,8 @@ import { X, ChevronRight, CheckCircle, XCircle, Trophy, ArrowLeft, Bookmark, Boo
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColors } from '@/hooks/useColors';
+import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
+import ConfettiOverlay from '@/components/ConfettiOverlay';
 import { questions } from '@/mocks/questions';
 import { passages } from '@/mocks/passages';
 import { useStudy } from '@/providers/StudyProvider';
@@ -48,6 +50,7 @@ export default function QuizScreen() {
   const [score, setScore] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
 
+  const { shakeAnim, flashOpacity, flashColor, showConfetti, triggerFeedback, dismissConfetti } = useAnswerFeedback();
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -68,17 +71,16 @@ export default function QuizScreen() {
     setIsAnswered(true);
 
     const isCorrect = index === currentQuestion.correctAnswer;
+    triggerFeedback(isCorrect);
     if (isCorrect) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setScore(prev => prev + 1);
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
 
     recordAnswer(currentQuestion.id, currentQuestion.category, isCorrect);
-  }, [isAnswered, currentQuestion, recordAnswer]);
+  }, [isAnswered, currentQuestion, recordAnswer, triggerFeedback]);
 
   const handleNext = useCallback(() => {
+    dismissConfetti();
     if (currentIndex >= quizQuestions.length - 1) {
       setIsFinished(true);
       return;
@@ -207,7 +209,7 @@ export default function QuizScreen() {
 
           <Text style={styles.questionText}>{currentQuestion.question}</Text>
 
-          <View style={styles.optionsContainer}>
+          <Animated.View style={[styles.optionsContainer, { transform: [{ translateX: shakeAnim }] }]}>
             {currentQuestion.options.map((option, index) => {
               const isSelected = selectedAnswer === index;
               const isCorrect = index === currentQuestion.correctAnswer;
@@ -247,7 +249,17 @@ export default function QuizScreen() {
                 </TouchableOpacity>
               );
             })}
-          </View>
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: flashColor,
+                opacity: flashOpacity,
+                borderRadius: 14,
+              }}
+            />
+          </Animated.View>
 
           {isAnswered && (
             <View style={styles.explanationBox}>
@@ -270,6 +282,8 @@ export default function QuizScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <ConfettiOverlay visible={showConfetti} onComplete={dismissConfetti} />
     </View>
   );
 }

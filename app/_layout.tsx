@@ -12,6 +12,8 @@ import { useNotificationStore } from "@/stores/notificationStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useColors } from "@/hooks/useColors";
 import BadgeUnlockModal from "@/components/BadgeUnlockModal";
+import LevelUpModal from "@/components/LevelUpModal";
+import { useLevelUpStore } from "@/stores/levelUpStore";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, useSegments } from "expo-router";
 
@@ -71,6 +73,20 @@ function BadgeToast() {
   );
 }
 
+function LevelUpToast() {
+  const { pendingLevelUp, dismissLevelUp } = useLevelUpStore();
+
+  if (pendingLevelUp === null) return null;
+
+  return (
+    <LevelUpModal
+      level={pendingLevelUp}
+      visible={true}
+      onDismiss={dismissLevelUp}
+    />
+  );
+}
+
 function RootLayoutNav() {
   const colors = useColors();
   return (
@@ -119,6 +135,7 @@ export default function RootLayout() {
           <OnboardingRedirect />
           <RootLayoutNav />
           <BadgeToast />
+          <LevelUpToast />
         </StudyProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
