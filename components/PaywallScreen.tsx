@@ -226,11 +226,11 @@ export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) 
           </Text>
 
           <View style={styles.legalLinksContainer}>
-            <TouchableOpacity onPress={() => Linking.openURL('https://rork.com/privacy-policy')}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://rork.app/pp/f5knzwux7ixo05y4m962d')}>
               <Text style={styles.legalLink}>Gizlilik Politikası</Text>
             </TouchableOpacity>
             <Text style={styles.legalLinksDivider}>•</Text>
-            <TouchableOpacity onPress={() => Linking.openURL('https://rork.com/terms')}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://rork.app/terms/f5knzwux7ixo05y4m962d')}>
               <Text style={styles.legalLink}>Kullanım Koşulları</Text>
             </TouchableOpacity>
           </View>

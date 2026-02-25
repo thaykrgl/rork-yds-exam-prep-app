@@ -1,13 +1,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
+import type { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 import { Platform, Alert } from 'react-native';
 import { PremiumTier } from '@/types';
 
-// RevenueCat API Keys - Replace with your actual keys from RevenueCat dashboard
-const REVENUECAT_API_KEY_IOS = 'appl_RIozWTvQNDnknhkvZhowqZVDicX';
-const REVENUECAT_API_KEY_ANDROID = 'goog_ZkSXpHzunqlVubQlxZmNgUfbvpT';
+const REVENUECAT_API_KEY_IOS = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || '';
+const REVENUECAT_API_KEY_ANDROID = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || '';
 
 // RevenueCat entitlement identifier - must match what you configure in RevenueCat dashboard
 const ENTITLEMENT_ID = 'premium';
@@ -56,24 +55,34 @@ export const usePremiumStore = create<PremiumStore>()(
       initialize: async () => {
         if (get().isInitialized) return;
 
+        if (Platform.OS === 'web') {
+          console.log('[RevenueCat] Skipping on web');
+          set({ isInitialized: true });
+          return;
+        }
+
         try {
+          const Purchases = (await import('react-native-purchases')).default;
           const apiKey = Platform.OS === 'ios'
             ? REVENUECAT_API_KEY_IOS
             : REVENUECAT_API_KEY_ANDROID;
 
+          if (!apiKey) {
+            console.warn('[RevenueCat] No API key configured');
+            set({ isInitialized: true });
+            return;
+          }
+
           Purchases.configure({ apiKey });
 
-          // Listen for customer info changes
           Purchases.addCustomerInfoUpdateListener((info: CustomerInfo) => {
             const isPremium = checkEntitlements(info);
             get().setTier(isPremium ? 'premium' : 'free');
           });
 
-          // Check current entitlements
           const customerInfo = await Purchases.getCustomerInfo();
           const isPremium = checkEntitlements(customerInfo);
 
-          // Get offerings to fetch the price
           let price = '₺119,99';
           try {
             const offerings = await Purchases.getOfferings();
@@ -137,10 +146,15 @@ export const usePremiumStore = create<PremiumStore>()(
       },
 
       purchaseLifetime: async () => {
+        if (Platform.OS === 'web') {
+          Alert.alert('Bilgi', 'Satın alma işlemi yalnızca mobil cihazlarda kullanılabilir.');
+          return false;
+        }
         if (get().isPurchasing) return false;
         set({ isPurchasing: true });
 
         try {
+          const Purchases = (await import('react-native-purchases')).default;
           const offerings = await Purchases.getOfferings();
           const current = offerings.current;
 
@@ -151,7 +165,6 @@ export const usePremiumStore = create<PremiumStore>()(
             return false;
           }
 
-          // Look for the lifetime package
           const lifetimePackage: PurchasesPackage | undefined =
             current.lifetime ?? current.availablePackages[0];
 
@@ -172,7 +185,6 @@ export const usePremiumStore = create<PremiumStore>()(
             return true;
           }
 
-          // In dev/sandbox mode, purchase may complete but not grant entitlements
           if (__DEV__) {
             set({ isPurchasing: false });
             return new Promise<boolean>((resolve) => {
@@ -198,7 +210,6 @@ export const usePremiumStore = create<PremiumStore>()(
         } catch (error: any) {
           set({ isPurchasing: false });
 
-          // User cancelled - not an error
           if (error.userCancelled) {
             return false;
           }
@@ -210,10 +221,15 @@ export const usePremiumStore = create<PremiumStore>()(
       },
 
       restore: async () => {
+        if (Platform.OS === 'web') {
+          Alert.alert('Bilgi', 'Geri yükleme işlemi yalnızca mobil cihazlarda kullanılabilir.');
+          return false;
+        }
         if (get().isRestoring) return false;
         set({ isRestoring: true });
 
         try {
+          const Purchases = (await import('react-native-purchases')).default;
           const customerInfo = await Purchases.restorePurchases();
           const isPremium = checkEntitlements(customerInfo);
 
@@ -231,7 +247,9 @@ export const usePremiumStore = create<PremiumStore>()(
       },
 
       syncPurchaseStatus: async () => {
+        if (Platform.OS === 'web') return;
         try {
+          const Purchases = (await import('react-native-purchases')).default;
           const customerInfo = await Purchases.getCustomerInfo();
           const isPremium = checkEntitlements(customerInfo);
           get().setTier(isPremium ? 'premium' : 'free');
