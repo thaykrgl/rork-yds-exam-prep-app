@@ -23,13 +23,5 @@
         "image": "latest"
       }
     }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "ascAppId": "",
-        "appleTeamId": ""
-      }
-    }
   }
 }
