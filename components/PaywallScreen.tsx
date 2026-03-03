@@ -9,7 +9,6 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { useColors } from '@/hooks/useColors';
 import { usePremiumStore } from '@/stores/premiumStore';
+import { useRouter } from 'expo-router';
 
 interface PaywallScreenProps {
   visible: boolean;
@@ -33,6 +33,7 @@ const features = [
 
 export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) {
   const colors = useColors();
+  const router = useRouter();
   const { purchaseLifetime, restore, isPurchasing, isRestoring, lifetimePrice } = usePremiumStore();
   const [error, setError] = useState<string | null>(null);
 
@@ -226,11 +227,11 @@ export default function PaywallScreen({ visible, onClose }: PaywallScreenProps) 
           </Text>
 
           <View style={styles.legalLinksContainer}>
-            <TouchableOpacity onPress={() => Linking.openURL('https://rork.app/pp/f5knzwux7ixo05y4m962d')}>
+            <TouchableOpacity onPress={() => { onClose(); router.push('/privacy-policy' as any); }}>
               <Text style={styles.legalLink}>Gizlilik Politikası</Text>
             </TouchableOpacity>
             <Text style={styles.legalLinksDivider}>•</Text>
-            <TouchableOpacity onPress={() => Linking.openURL('https://rork.app/terms/f5knzwux7ixo05y4m962d')}>
+            <TouchableOpacity onPress={() => { onClose(); router.push('/terms-of-use' as any); }}>
               <Text style={styles.legalLink}>Kullanım Koşulları</Text>
             </TouchableOpacity>
           </View>

@@ -111,6 +111,8 @@ function RootLayoutNav() {
       <Stack.Screen name="grammar-topic" options={{ headerShown: false }} />
       <Stack.Screen name="personal-records" options={{ headerShown: false }} />
       <Stack.Screen name="word-match" options={{ headerShown: false }} />
+      <Stack.Screen name="privacy-policy" options={{ headerShown: false }} />
+      <Stack.Screen name="terms-of-use" options={{ headerShown: false }} />
     </Stack>
   );
 }

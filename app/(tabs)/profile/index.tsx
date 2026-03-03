@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Flame, Target, TrendingUp, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Moon, Sun, Bookmark } from 'lucide-react-native';
+import { Award, Flame, Target, TrendingUp, BookOpen, Trophy, Clock, ChevronRight, BarChart3, Bell, BellOff, Medal, Moon, Sun, Bookmark, RotateCcw, Shield, FileText, Info } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useThemeStore } from '@/stores/themeStore';
@@ -18,6 +18,8 @@ import { requestNotificationPermissions } from '@/utils/notifications';
 import { allBadges } from '@/data/badges';
 import BadgeCard from '@/components/BadgeCard';
 import XPBar from '@/components/XPBar';
+import { usePremiumStore } from '@/stores/premiumStore';
+import Constants from 'expo-constants';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -55,7 +57,22 @@ export default function ProfileScreen() {
     });
   }, [stats.categoryStats]);
 
+  const { isRestoring, restore, tier } = usePremiumStore();
+  const appVersion = Constants.expoConfig?.version || '1.0.0';
   const { preferences, updatePreferences } = useNotificationStore();
+
+  const handleRestore = async () => {
+    try {
+      const success = await restore();
+      if (success) {
+        Alert.alert('Başarılı', 'Satın alımlarınız geri yüklendi.');
+      } else {
+        Alert.alert('Bilgi', 'Geri yüklenecek satın alım bulunamadı.');
+      }
+    } catch {
+      Alert.alert('Hata', 'Geri yükleme sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    }
+  };
 
   const handleToggleDaily = async () => {
     const newState = !preferences.dailyReminder;
@@ -367,6 +384,51 @@ export default function ProfileScreen() {
           <Text style={{ color: colors.textLight, fontSize: 13, textAlign: 'center', marginVertical: 10 }}>Henüz sınav geçmişi yok.</Text>
         )}
 
+        {/* Account & Legal */}
+        <Text style={styles.sectionTitle}>Hesap ve Yasal</Text>
+
+        {tier === 'free' && (
+          <TouchableOpacity
+            style={styles.analyticsButton}
+            activeOpacity={0.7}
+            onPress={handleRestore}
+            disabled={isRestoring}
+          >
+            {isRestoring ? (
+              <ActivityIndicator size="small" color={colors.accent} />
+            ) : (
+              <RotateCcw size={20} color={colors.accent} />
+            )}
+            <Text style={styles.analyticsText}>Satın Alımları Geri Yükle</Text>
+            <ChevronRight size={18} color={colors.textLight} />
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          activeOpacity={0.7}
+          onPress={() => router.push('/privacy-policy' as any)}
+        >
+          <Shield size={20} color={colors.textSecondary} />
+          <Text style={styles.analyticsText}>Gizlilik Politikası</Text>
+          <ChevronRight size={18} color={colors.textLight} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          activeOpacity={0.7}
+          onPress={() => router.push('/terms-of-use' as any)}
+        >
+          <FileText size={20} color={colors.textSecondary} />
+          <Text style={styles.analyticsText}>Kullanım Koşulları</Text>
+          <ChevronRight size={18} color={colors.textLight} />
+        </TouchableOpacity>
+
+        <View style={styles.versionContainer}>
+          <Info size={14} color={colors.textLight} />
+          <Text style={styles.versionText}>YDS Pro 2026 · v{appVersion}</Text>
+        </View>
+
       </ScrollView>
     </View>
   );
@@ -648,5 +710,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   examHistoryPercent: {
     fontSize: 13,
     fontWeight: '700' as const,
+  },
+  versionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
+    marginBottom: 32,
+  },
+  versionText: {
+    fontSize: 12,
+    color: colors.textLight,
   },
 });
